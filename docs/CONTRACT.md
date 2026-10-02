@@ -43,20 +43,45 @@ Guests use the app without an account; their progress lives in localStorage.
 
 ```jsonc
 {
-  "id": "quran:5:6",              // quran:<surah>:<ayah> | hadith:<collection>:<number> | ref:<slug>
-                                  // hadith numbers are the standard ones (Muslim: Fu'ad 'Abd al-Baqi)
+  "id": "quran:5:6",              // quran:<surah>:<ayah> | hadith:(bukhari|muslim):<number> | hadith:henc:<id>
+                                  // | ref:icadb:<card> (faq) | ref:terminologyenc:<term> (dictionary)
+                                  // Bukhari/Muslim numbers are the standard ones (Muslim: Fu'ad 'Abd al-Baqi)
   "kind": "quran",                // quran | hadith | tafsir | fiqh | aqidah | faq | dictionary
   "ref_en": "Al-Ma'idah 5:6",
-  "ref_ar": "المائدة: 6",
+  "ref_ar": "المائدة: ٦",          // Arabic-Indic digits
   "text_ar": "…verbatim…",
-  "text_en": "…approved translation…",
-  "translation": "Saheeh International", // provenance of text_en
-  "origin": "Tanzil Uthmani / quran.com API v4",
-  "url": "https://quran.com/5/6",
-  "grading": null,                // hadith only, e.g. "Sahih (al-Bukhari)"
-  "review_status": "pending"      // pending | approved — set by a scholarly reviewer
+  "text_en": "…approved translation…", // "" when languages == ["ar"]
+  "translation": "English Translation - Noor International Center (QuranEnc english_saheeh v1.1.2)",
+  "origin": "QuranEnc.com — موسوعة القرآن الكريم",
+  "url": "https://quranenc.com/en/browse/english_saheeh/5#6",
+  "grading": null,                // hadith only, verbatim from the platform, e.g. "Authentic · صحيح"
+  "review_status": "pending",     // pending | approved — set by a scholarly reviewer
+
+  // Optional, by kind (stored in the `extra` jsonb column):
+  "languages": ["ar"],            // only when a source exists in Arabic only
+  "footnotes_en": "[104] …",      // quran: translator's footnotes, verbatim
+  "recitation": {                 // quran: human recitation, never synthesized
+    "reciter_en": "Mishary Alafasy", "reciter_ar": "مشاري العفاسي", "rewaya": "Hafs 'an 'Asim",
+    "url": "https://server8.mp3quran.net/afs/005.mp3", "start_ms": 1234, "end_ms": 56789, "origin": "mp3quran.net"
+  },
+  "title_en": "…", "title_ar": "…",                    // hadith:henc
+  "attribution_en": "Agreed upon", "attribution_ar": "متفق عليه",
+  "explanation_en": "…", "explanation_ar": "…",        // scholarly commentary — never shown as hadith text
+  "benefits_en": ["…"], "benefits_ar": ["…"],
+  "reference_ar": "صحيح البخاري (…) (164)…",
+  "collection_refs": ["hadith:bukhari:164"],          // standard numbers named by the platform
+  "see_also": ["hadith:bukhari:164"],                 // other sources in this KB that are the same hadith
+  "question_ar": "…", "question_en": null,             // faq
+  "source_note_ar": "…", "version": "1.0",
+  "term_en": "Monotheism", "term_ar": "توحيد",          // dictionary
+  "linguistic_en": "…", "linguistic_ar": "…"
 }
 ```
+
+Retrieval chunks (`source_chunks`) are built by `app.db.source_passages`: one per
+language with the reference (and the question/term/title) prepended, plus a
+separate, labelled chunk for a hadith's explanation and benefits. Every chunk
+resolves to its source id, so a commentary hit cites the hadith it explains.
 
 ### Lesson (`content/lessons/<id>.json`, table `lessons`)
 
@@ -178,6 +203,9 @@ with the matching HTTP status. The tutor never returns a 500 to the UI for a
 model failure; it returns `tier: "NONE"` with an apology block instead.
 
 ## Database (Supabase Postgres)
+
+Migration `0002_source_extra.sql` adds `sources.extra jsonb` for the kind-specific source fields above;
+the API reads it when present and `scripts/seed.py` refuses to run until it is applied.
 
 Tables: `profiles(id uuid pk → auth.users, display_name, role: learner|instructor|reviewer, preferred_track, lang)`,
 `app_config(key, data jsonb)` (holds `tracks`),

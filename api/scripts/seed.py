@@ -13,20 +13,36 @@ import sys
 
 from app import embeddings
 from app.config import get_settings
-from app.db import card_docs, load_content
+from app.db import CORE_SOURCE_FIELDS, card_docs, load_content, source_extra, source_passages
 
-SOURCE_COLS = ("id", "kind", "ref_en", "ref_ar", "text_ar", "text_en", "translation", "origin", "url", "grading", "review_status")
+SOURCE_COLS = CORE_SOURCE_FIELDS
+MAX_CHUNK = 1800  # characters; long Q&A answers are split so each embedding stays focused
+
+
+def split(text: str, limit: int = MAX_CHUNK) -> list[str]:
+    head, _, body = text.partition("\n")
+    if len(text) <= limit:
+        return [text]
+    parts, cur = [], ""
+    for para in body.split("\n"):
+        if cur and len(cur) + len(para) + 1 > limit - len(head):
+            parts.append(cur)
+            cur = ""
+        cur = f"{cur}\n{para}" if cur else para
+    if cur:
+        parts.append(cur)
+    return [f"{head}\n{p}" for p in parts]
 
 
 def source_chunks(src: dict) -> list[dict]:
-    """One chunk per language, each carrying the reference so either language retrieves it."""
-    ref = f"{src.get('ref_en', '')} | {src.get('ref_ar', '')}"
+    """Chunks per language (plus labelled scholarly-explanation chunks), each carrying the
+    reference so either language retrieves it, and each resolving to the source id."""
     chunks = []
-    for lang in ("en", "ar"):
-        text = src.get(f"text_{lang}")
-        if text:
-            chunks.append({"id": f"{src['id']}#{lang}", "source_id": src["id"], "lesson_id": None, "lang": lang,
-                           "content": f"{ref}\n{text}"})
+    for suffix, lang, text in source_passages(src):
+        pieces = split(text)
+        for i, piece in enumerate(pieces):
+            cid = f"{src['id']}#{suffix}" + (f"-{i + 1}" if len(pieces) > 1 else "")
+            chunks.append({"id": cid, "source_id": src["id"], "lesson_id": None, "lang": lang, "content": piece})
     return chunks
 
 
@@ -54,11 +70,17 @@ async def main(argv: list[str] | None = None) -> int:
     conn = await asyncpg.connect(s.database_url, statement_cache_size=0)
     await conn.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
     try:
+        has_extra = await conn.fetchval(
+            "select exists (select 1 from information_schema.columns "
+            "where table_schema = 'public' and table_name = 'sources' and column_name = 'extra')")
+        if not has_extra:
+            print("sources.extra is missing: apply supabase/migrations/0002_source_extra.sql first", file=sys.stderr)
+            return 1
         async with conn.transaction():
             await conn.executemany(
-                f"insert into sources ({', '.join(SOURCE_COLS)}) values ({', '.join(f'${i + 1}' for i in range(len(SOURCE_COLS)))}) "
-                "on conflict (id) do update set " + ", ".join(f"{c} = excluded.{c}" for c in SOURCE_COLS[1:]) + ", updated_at = now()",
-                [tuple(src.get(c) for c in SOURCE_COLS) for src in sources.values()],
+                f"insert into sources ({', '.join(SOURCE_COLS)}, extra) values ({', '.join(f'${i + 1}' for i in range(len(SOURCE_COLS) + 1))}) "
+                "on conflict (id) do update set " + ", ".join(f"{c} = excluded.{c}" for c in (*SOURCE_COLS[1:], "extra")) + ", updated_at = now()",
+                [tuple(src.get(c) for c in SOURCE_COLS) + (source_extra(src),) for src in sources.values()],
             )
             await conn.executemany(
                 "insert into lessons (id, track, module, status, data) values ($1, $2, $3, $4, $5) "

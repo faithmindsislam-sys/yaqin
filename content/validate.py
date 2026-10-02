@@ -72,6 +72,52 @@ def ngrams(words, n):
     return {tuple(words[i:i + n]) for i in range(len(words) - n + 1)}
 
 
+ID_PATTERNS = {
+    "quran": r"quran:\d+:\d+",
+    "hadith": r"hadith:(bukhari|muslim):\d+[a-z]?|hadith:henc:\d+",
+    "faq": r"ref:icadb:\d+",
+    "dictionary": r"ref:terminologyenc:\d+",
+}
+
+
+def check_source_fields(where, s):
+    """Shape of the optional knowledge-base fields (see docs/CONTRACT.md)."""
+    pattern = ID_PATTERNS.get(s.get("kind"))
+    if pattern and not re.fullmatch(pattern, s.get("id", "")):
+        err(where, f"id does not match {s.get('kind')} pattern")
+    if s.get("kind") == "hadith" and not s.get("grading"):
+        err(where, "hadith without a grading")
+    if s.get("kind") == "hadith" and s["id"].startswith("hadith:henc:"):
+        for key in ("explanation_en", "explanation_ar"):
+            if s.get(key) is not None and not isinstance(s[key], str):
+                err(where, f"'{key}' must be a string")
+        for key in ("benefits_en", "benefits_ar"):
+            if not isinstance(s.get(key, []), list):
+                err(where, f"'{key}' must be a list")
+    rec = s.get("recitation")
+    if rec is not None:
+        if s.get("kind") != "quran":
+            err(where, "recitation only belongs on Qur'an sources")
+        elif not (isinstance(rec.get("url"), str) and rec["url"].startswith("https://")):
+            err(where, "recitation.url must be an https URL")
+        elif ("start_ms" in rec) != ("end_ms" in rec) or (rec.get("start_ms", 0) or 0) > (rec.get("end_ms", 0) or 0):
+            err(where, "recitation start_ms/end_ms inconsistent")
+    for other in s.get("see_also", []) or []:
+        if not isinstance(other, str):
+            err(where, "see_also must list source ids")
+    if s.get("kind") == "faq" and not s.get("question_ar"):
+        err(where, "faq without question_ar")
+    if s.get("kind") == "dictionary" and not (s.get("term_en") and s.get("term_ar")):
+        err(where, "dictionary entry without term_en/term_ar")
+
+
+def check_see_also(sources):
+    for sid, s in sources.items():
+        for other in s.get("see_also", []) or []:
+            if other not in sources:
+                err(f"sources:{sid}", f"see_also references unknown {other}")
+
+
 def load_sources():
     sources = {}
     for f in sorted((ROOT / "sources").glob("*.json")):
@@ -79,13 +125,19 @@ def load_sources():
             where = f"sources/{f.name}:{s.get('id')}"
             if s.get("id") in sources:
                 err(where, "duplicate source id")
-            for key in ("id", "kind", "ref_en", "ref_ar", "text_ar", "text_en", "origin", "review_status"):
+            arabic_only = s.get("languages") == ["ar"]
+            for key in ("id", "kind", "ref_en", "ref_ar", "text_ar", "text_en", "origin", "url", "review_status"):
+                if key == "text_en" and arabic_only:
+                    if s.get(key) != "":
+                        err(where, "Arabic-only source must have text_en == ''")
+                    continue
                 if not s.get(key):
                     err(where, f"missing '{key}'")
             if s.get("kind") not in SOURCE_KINDS:
                 err(where, f"bad kind {s.get('kind')!r}")
             if s.get("review_status") not in ("pending", "approved"):
                 err(where, "review_status must be pending|approved")
+            check_source_fields(where, s)
             sources[s["id"]] = s
     return sources
 
@@ -247,6 +299,7 @@ def check_eval(sources):
 def main():
     fix = "--fix" in sys.argv
     sources = load_sources()
+    check_see_also(sources)
     lessons = {}
     for path in sorted((ROOT / "lessons").glob("*.json")):
         data = check_lesson(path, sources, fix)

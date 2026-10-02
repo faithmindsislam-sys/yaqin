@@ -16,28 +16,45 @@ content/
 
 ## Provenance
 
-**Nothing in `sources/` is typed by hand.** `tools/fetch_sources.py` downloads
-each item and writes it unchanged, apart from removing translation footnote
-markers. Re-running the script reproduces the files.
+**Nothing in `sources/` is typed by hand.** Every item is downloaded by a script
+in `tools/` and written unchanged. Re-running the scripts reproduces the files
+(responses are cached in `kb/cache/`, which is not committed).
 
-| Kind | Arabic text | English text | Upstream |
-|---|---|---|---|
-| Qur'an | `text_uthmani` (Uthmani script) | Saheeh International (quran.com resource 20; footnote markers removed) | `api.quran.com/api/v4/verses/by_key` |
-| Hadith | Arabic edition | English edition of the same index | `fawazahmed0/hadith-api@1` via jsDelivr |
+The challenge's updated scientific package (`kb/kb.pdf`, pages 8–15) names the
+platforms of جمعية خدمة المحتوى الإسلامي باللغات as the reference for approved
+translations, so the knowledge base is built on them. See `kb/SOURCES.md` for
+what each platform's API offers and its reuse terms.
 
-Hadith ids use the standard numbering shown on sunnah.com: al-Bukhari's
-number, and Fu'ad 'Abd al-Baqi's number for Sahih Muslim (`hadith:muslim:223`;
-a letter picks a sub-narration, `hadith:muslim:376c`). Fetch them with
-`api/scripts/fetch_sources.py`, which maps these to the upstream edition. Only
-the two Sahih collections (al-Bukhari and Muslim) are used, and each hadith was
-read in full before it was cited, to confirm it says what the lesson claims.
+| File | Kind | Arabic | English | Upstream | Script |
+|---|---|---|---|---|---|
+| `quran.json` | `quran` | QuranEnc Arabic (King Fahd Madani orthography) | Saheeh International — Noor International Center, QuranEnc `english_saheeh` (version recorded per entry), **unmodified including footnote markers**; footnotes in `footnotes_en` | QuranEnc.com | `tools/fetch_quranenc.py` |
+| `quran.json` → `recitation` | — | Mishary Alafasy, Hafs, per-surah MP3 with ayah `start_ms`/`end_ms` | — | mp3quran.net | `tools/fetch_quranenc.py` |
+| `hadith.json` (`hadith:henc:*`) | `hadith` | HadeethEnc hadith text | HadeethEnc translation | HadeethEnc.com | `tools/fetch_hadeethenc.py` |
+| `hadith.json` (`hadith:bukhari:*`, `hadith:muslim:*`) | `hadith` | Arabic edition | English edition | `fawazahmed0/hadith-api@1` | `api/scripts/fetch_sources.py` |
+| `faq.json` | `faq` | Approved Q&A cards (Arabic only as published) | — | ICADB, encyclopedias 110 and 102 | `tools/fetch_icadb_faq.py` |
+| `dictionary.json` | `dictionary` | TerminologyEnc definition + explanation | TerminologyEnc translation | TerminologyEnc.com | `tools/fetch_terms.py` |
 
-The challenge's scientific package names King Fahd Complex texts and
-quranpedia.net as the reference for Qur'an text and translation. Before public
-launch, the reviewer should confirm the Uthmani text against the King Fahd
-Mushaf, and decide whether to keep Saheeh International or switch to a King Fahd
-Complex translation. Changing the translation only needs a different resource id
-in `fetch_sources.py`.
+**Commentary is not revealed text.** HadeethEnc's explanation (شرح) and
+benefits (فوائد) are stored in `explanation_*` / `benefits_*`, never in
+`text_*`. Their retrieval chunks are labelled "scholarly explanation (not hadith
+text)" and resolve to the hadith id. Glossary and Q&A answers are reference
+material: they may quote verses and hadith inside them, as published.
+
+QuranEnc's terms allow republishing on condition of no modification, credit to
+QuranEnc.com, and the version number — hence the footnote markers stay in the
+English text, and each entry's `translation` field carries the version. The
+English wording matched the earlier Saheeh International text exactly; the
+Arabic changed only in orthographic encoding (King Fahd Madani Mushaf diacritics
+instead of Tanzil's), not in wording.
+
+Hadith ids from the two Sahih collections use the standard numbering shown on
+sunnah.com (al-Bukhari's number; Fu'ad 'Abd al-Baqi's for Muslim, e.g.
+`hadith:muslim:223`, with a letter for a sub-narration). HadeethEnc entries keep
+HadeethEnc's own id (`hadith:henc:3313`); the Bukhari/Muslim numbers named in
+HadeethEnc's reference list are stored in `collection_refs`, and `see_also`
+links entries that are the same hadith. Each of the original nine hadith was
+read in full before it was cited in a lesson. HadeethEnc grades are recorded
+verbatim; every ingested item is graded sahih or hasan.
 
 ### What is AI-drafted
 
@@ -116,6 +133,8 @@ without picking a side.
 - [ ] c6 **[C]**: what to do if you prayed in the wrong direction after a sincere effort; the lesson defers the details to a teacher.
 
 ### Sources
-- [ ] Spot-check `text_ar` of every Qur'an entry against the King Fahd Mushaf.
-- [ ] Decide on the English translation to use (see Provenance).
+- [ ] Spot-check `text_ar` of every Qur'an entry against the King Fahd Mushaf (now sourced from QuranEnc).
+- [ ] Confirm Saheeh International (QuranEnc `english_saheeh`) as the English translation, or pick `english_rwwad` (Rowwad Translation Center) — both are on QuranEnc.
+- [ ] Review the 152 HadeethEnc hadith and their explanations; remove any that should not be used for a given track.
+- [ ] Review the 37 ICADB Q&A answers (Arabic only) before they are shown to learners.
 - [ ] Set `review_status: "approved"` on each source once checked.
