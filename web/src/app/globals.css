@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0b2a4a;
+  --color-ink-soft: #3d5670;
+  --color-muted: #6b7f93;
+  --color-teal-50: #ecf8f8;
+  --color-teal-100: #d2efef;
+  --color-teal-200: #a6dfe0;
+  --color-teal-300: #6fc9cb;
+  --color-teal-400: #2fb0b3;
+  --color-teal-500: #13979b;
+  --color-teal-600: #0e7f83;
+  --color-teal-700: #0d666a;
+  --color-teal-800: #0f5255;
+  --color-sky-50: #f3f9fc;
+  --color-sky-100: #e6f2f8;
+  --color-sky-200: #cfe5f0;
+  --color-gold: #f2b134;
+  --color-rose: #d95c4a;
+  --color-line: #dbe7ee;
+
+  --font-sans: var(--font-readex), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-dmserif), var(--font-readex), Georgia, serif;
+  --font-quran: var(--font-amiri-quran), var(--font-readex), serif;
+
+  --radius-card: 1.25rem;
+  --shadow-card: 0 1px 2px rgb(11 42 74 / 0.04), 0 8px 24px -12px rgb(11 42 74 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(11 42 74 / 0.05), 0 18px 40px -18px rgb(11 42 74 / 0.25);
+}
+
+html {
+  background: var(--color-sky-50);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Arabic headings read better in Readex than in a Latin display serif. */
+[dir="rtl"] .font-serif {
+  font-family: var(--font-readex), serif;
+  font-weight: 600;
+}
+
+.quran {
+  font-family: var(--font-quran);
+  direction: rtl;
+  line-height: 2.1;
+}
+
+.card {
+  background: white;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.7rem 1.35rem;
+  font-weight: 500;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-teal-400);
+  outline-offset: 2px;
+}
+.btn-primary {
+  color: white;
+  background: linear-gradient(180deg, var(--color-teal-500), var(--color-teal-700));
+  box-shadow: 0 8px 20px -10px rgb(13 102 106 / 0.7);
+}
+.btn-primary:hover {
+  box-shadow: 0 10px 24px -10px rgb(13 102 106 / 0.85);
+}
+.btn-ghost {
+  background: white;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink);
+}
+.btn-ghost:hover {
+  border-color: var(--color-teal-300);
+}
+.btn[disabled] {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--color-line);
+  background: white;
+  color: var(--color-ink-soft);
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.85rem;
+  border: 1px solid var(--color-line);
+  background: white;
+  padding: 0.75rem 1rem;
+  color: var(--color-ink);
+}
+.input::placeholder {
+  color: var(--color-muted);
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-teal-600);
+  font-weight: 500;
+}
+[dir="rtl"] .eyebrow {
+  letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 360ms ease-out both;
+}

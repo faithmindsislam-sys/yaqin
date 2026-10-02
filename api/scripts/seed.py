@@ -1,0 +1,106 @@
+"""Load content/ JSON into Postgres and build the retrieval index. Idempotent.
+
+    python -m scripts.seed                 # sources, lessons, tracks, chunks (+ embeddings if AWS is configured)
+    python -m scripts.seed --no-embed      # keyword index only
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import sys
+
+from app import embeddings
+from app.config import get_settings
+from app.db import card_docs, load_content
+
+SOURCE_COLS = ("id", "kind", "ref_en", "ref_ar", "text_ar", "text_en", "translation", "origin", "url", "grading", "review_status")
+
+
+def source_chunks(src: dict) -> list[dict]:
+    """One chunk per language, each carrying the reference so either language retrieves it."""
+    ref = f"{src.get('ref_en', '')} | {src.get('ref_ar', '')}"
+    chunks = []
+    for lang in ("en", "ar"):
+        text = src.get(f"text_{lang}")
+        if text:
+            chunks.append({"id": f"{src['id']}#{lang}", "source_id": src["id"], "lesson_id": None, "lang": lang,
+                           "content": f"{ref}\n{text}"})
+    return chunks
+
+
+def lesson_chunks(lesson: dict) -> list[dict]:
+    """Reviewed card prose, linked to the card's first source (or the lesson's) so a hit resolves to citable text."""
+    return [{"id": doc_id, "source_id": ids[0], "lesson_id": lesson["id"], "lang": "mixed", "content": text}
+            for doc_id, text, ids in card_docs(lesson)]
+
+
+async def main(argv: list[str] | None = None) -> int:
+    import asyncpg
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--no-embed", action="store_true")
+    args = ap.parse_args(argv)
+
+    s = get_settings()
+    if not s.database_url:
+        print("DATABASE_URL is not set", file=sys.stderr)
+        return 2
+    tracks, lessons, sources = load_content(s.content_dir)
+    embed = not args.no_embed and s.aws_enabled
+    print(f"{len(sources)} sources, {len(lessons)} lessons, {len(tracks)} tracks; embeddings: {'on' if embed else 'off'}")
+
+    conn = await asyncpg.connect(s.database_url, statement_cache_size=0)
+    await conn.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
+    try:
+        async with conn.transaction():
+            await conn.executemany(
+                f"insert into sources ({', '.join(SOURCE_COLS)}) values ({', '.join(f'${i + 1}' for i in range(len(SOURCE_COLS)))}) "
+                "on conflict (id) do update set " + ", ".join(f"{c} = excluded.{c}" for c in SOURCE_COLS[1:]) + ", updated_at = now()",
+                [tuple(src.get(c) for c in SOURCE_COLS) for src in sources.values()],
+            )
+            await conn.executemany(
+                "insert into lessons (id, track, module, status, data) values ($1, $2, $3, $4, $5) "
+                "on conflict (id) do update set track = excluded.track, module = excluded.module, "
+                "status = excluded.status, data = excluded.data, updated_at = now()",
+                [(l["id"], l["track"], l["module"], l.get("status", "draft"), l) for l in lessons.values()],
+            )
+            await conn.execute(
+                "insert into app_config (key, data) values ('tracks', $1) "
+                "on conflict (key) do update set data = excluded.data, updated_at = now()", tracks)
+
+        chunks = [c for src in sources.values() for c in source_chunks(src)]
+        chunks += [c for l in lessons.values() for c in lesson_chunks(l) if c["source_id"] in sources]
+        existing = {r["id"]: r["content"] for r in await conn.fetch(
+            "select id, content from source_chunks where embedding is not null")}
+        rows = []
+        for i, c in enumerate(chunks, 1):
+            vec = None
+            if embed:
+                if existing.get(c["id"]) == c["content"]:
+                    vec = "keep"
+                else:
+                    v = await embeddings.embed(c["content"])
+                    vec = "[" + ",".join(f"{x:.6f}" for x in v) + "]" if v else None
+            rows.append((c["id"], c["source_id"], c["lesson_id"], c["lang"], c["content"], vec))
+            if i % 25 == 0:
+                print(f"  chunks {i}/{len(chunks)}")
+        await conn.executemany(
+            "insert into source_chunks (id, source_id, lesson_id, lang, content, embedding) "
+            "values ($1, $2, $3, $4, $5, case when $6::text in ('keep') or $6::text is null then null else $6::text::extensions.vector end) "
+            "on conflict (id) do update set source_id = excluded.source_id, lesson_id = excluded.lesson_id, "
+            "lang = excluded.lang, content = excluded.content, "
+            "embedding = case when $6::text = 'keep' then source_chunks.embedding else excluded.embedding end",
+            rows,
+        )
+        ids = [c["id"] for c in chunks]
+        await conn.execute("delete from source_chunks where not (id = any($1::text[]))", ids)
+        print(f"upserted {len(sources)} sources, {len(lessons)} lessons, {len(chunks)} chunks")
+    finally:
+        await conn.close()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(asyncio.run(main()))

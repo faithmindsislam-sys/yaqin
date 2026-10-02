@@ -1,0 +1,59 @@
+[
+  {
+    "id": "explore",
+    "title": { "en": "Explore Islam", "ar": "اكتشف الإسلام" },
+    "tagline": {
+      "en": "Clear, sourced answers to the questions people actually ask.",
+      "ar": "أجوبة واضحة وموثّقة عن الأسئلة التي يطرحها الناس فعلًا."
+    },
+    "audience": {
+      "en": "For anyone curious about Islam, or holding a real objection. No pressure, and nothing about your beliefs is recorded.",
+      "ar": "لكل من يتساءل عن الإسلام أو لديه إشكال حقيقي. بلا ضغط، ولا نسجّل شيئًا عن قناعاتك."
+    },
+    "modules": [
+      {
+        "id": "common-questions",
+        "title": { "en": "Common questions", "ar": "أسئلة متكررة" },
+        "lessons": ["who-is-god", "kaaba-qibla", "spread-by-sword"]
+      }
+    ]
+  },
+  {
+    "id": "first-steps",
+    "title": { "en": "First Steps", "ar": "خطواتي الأولى" },
+    "tagline": {
+      "en": "A gentle daily path for your first weeks as a Muslim.",
+      "ar": "مسار يومي هادئ لأسابيعك الأولى في الإسلام."
+    },
+    "audience": {
+      "en": "For someone who has just become Muslim. Every item is labelled obligatory, recommended or a learning suggestion.",
+      "ar": "لمن دخل الإسلام حديثًا. كل بند موسوم: واجب، أو مستحب، أو اقتراح للتعلّم."
+    },
+    "modules": [
+      {
+        "id": "purification",
+        "title": { "en": "Purification", "ar": "الطهارة" },
+        "lessons": ["wudu-order", "what-breaks-wudu"]
+      }
+    ]
+  },
+  {
+    "id": "deepen",
+    "title": { "en": "Deepen My Knowledge", "ar": "أعمّق معرفتي" },
+    "tagline": {
+      "en": "Understand what you already practise, from approved sources.",
+      "ar": "افهم ما تمارسه كل يوم، من مصادر معتمدة."
+    },
+    "audience": {
+      "en": "For a Muslim who wants to go deeper: structured pathways at a foundation and a deeper level.",
+      "ar": "للمسلم الراغب في التعمّق: مسارات منظّمة بمستوى تأسيسي ومستوى أعمق."
+    },
+    "modules": [
+      {
+        "id": "understand-what-you-recite",
+        "title": { "en": "Understand what you recite", "ar": "افهم ما تتلوه" },
+        "lessons": ["al-fatiha-meaning", "why-face-qibla"]
+      }
+    ]
+  }
+]

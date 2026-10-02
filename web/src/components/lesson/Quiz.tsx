@@ -1,0 +1,70 @@
+"use client";
+
+import { useState } from "react";
+import { Check, X } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
+import { S } from "@/lib/strings";
+import type { Lesson } from "@/lib/types";
+import { SourceQuote } from "../ui";
+
+export function Quiz({ lesson, onFinish }: { lesson: Lesson; onFinish: (score: number) => void }) {
+  const { t } = useI18n();
+  const items = lesson.quiz ?? [];
+  const [i, setI] = useState(0);
+  const [picked, setPicked] = useState<number | null>(null);
+  const [correct, setCorrect] = useState(0);
+  const q = items[i];
+  if (!q) return null;
+
+  const answered = picked !== null;
+  const right = picked === q.answer;
+
+  function next() {
+    const score = correct + (right ? 1 : 0);
+    if (i + 1 < items.length) {
+      setCorrect(score);
+      setI(i + 1);
+      setPicked(null);
+    } else {
+      onFinish(score / items.length);
+    }
+  }
+
+  return (
+    <section className="rise" key={q.id}>
+      <p className="eyebrow">
+        {t(S.lesson.quizTitle)} · {i + 1} {t(S.lesson.of)} {items.length}
+      </p>
+      <h2 className="mt-3 font-serif text-3xl text-ink">{t(q.question)}</h2>
+      <div className="mt-6 space-y-2.5">
+        {q.options.map((opt, idx) => {
+          const state = !answered ? "idle" : idx === q.answer ? "right" : idx === picked ? "wrong" : "idle";
+          return (
+            <button
+              key={idx}
+              disabled={answered}
+              onClick={() => setPicked(idx)}
+              className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-4 text-start transition ${
+                state === "right" ? "border-teal-400 bg-teal-50 font-medium" : state === "wrong" ? "border-rose/50 bg-rose/5" : "border-line bg-white hover:border-teal-300"
+              }`}
+            >
+              <span>{t(opt)}</span>
+              {state === "right" && <Check className="h-5 w-5 text-teal-600" />}
+              {state === "wrong" && <X className="h-5 w-5 text-rose" />}
+            </button>
+          );
+        })}
+      </div>
+      {answered && (
+        <div className="mt-5 space-y-3">
+          <p className={`font-semibold ${right ? "text-teal-700" : "text-rose"}`}>{t(right ? S.lesson.correct : S.lesson.notQuite)}</p>
+          {q.explanation && <p className="text-ink-soft">{t(q.explanation)}</p>}
+          {q.source && <SourceQuote id={q.source} compact />}
+          <button className="btn btn-primary" onClick={next}>
+            {t(S.lesson.continue)} <span aria-hidden className="rtl:rotate-180">→</span>
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}

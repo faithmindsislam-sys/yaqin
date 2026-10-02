@@ -1,0 +1,21 @@
+# secrets (live in ~/.config/yaqin, never in the repo)
+.env
+.env.*
+!.env.example
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# node / next
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+web/src/generated/
+
+# misc
+.DS_Store
+*.log
