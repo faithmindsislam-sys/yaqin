@@ -295,12 +295,26 @@ PY
   aws cloudfront wait distribution-deployed --id "$DIST_ID"
 }
 
+retain_all() {
+  # The account auto-deletes resources unless tagged auto-delete=no; keep everything in this project.
+  log "Retention tag on all project resources"
+  local r arns
+  for r in "$REGION" us-east-1; do
+    arns=$(aws --region "$r" resourcegroupstaggingapi get-resources --tag-filters Key=project,Values=$APP \
+      --query 'ResourceTagMappingList[].ResourceARN' --output text)
+    [ -n "$arns" ] && echo "$arns" | tr '\t' '\n' | xargs -n 20 aws --region "$r" resourcegroupstaggingapi tag-resources \
+      --tags auto-delete=no --query FailedResourcesMap --output text --resource-arn-list >/dev/null
+  done
+  return 0
+}
+
 case "${1:-all}" in
   build)
     ensure_codebuild
     build_image
     aws_ ecs update-service --cluster $APP --service $APP-api --force-new-deployment >/dev/null
     aws_ ecs wait services-stable --cluster $APP --services $APP-api
+    retain_all
     ;;
   all)
     ensure_ecr
@@ -313,6 +327,7 @@ case "${1:-all}" in
     ensure_alb
     ensure_service
     ensure_cloudfront_route
+    retain_all
     ;;
   *) echo "usage: $0 [all|build]" >&2; exit 2 ;;
 esac
