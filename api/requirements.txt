@@ -8,3 +8,4 @@ asyncpg==0.31.0
 httpx==0.28.1
 boto3==1.43.107
 anthropic[bedrock]==1.11.0
+jsonschema==4.26.0

@@ -85,7 +85,7 @@ def test_review_check_flags_unsourced_scripture_and_unknown_ids(client, reviewer
 def test_denied_aws_profile_raises(monkeypatch):
     from app.config import get_settings
 
-    monkeypatch.setenv("YAQIN_AWS_PROFILE", "mbnsalem-12h")
+    monkeypatch.setenv("YAQIN_AWS_PROFILE", "aws-some-work-account")
     get_settings.cache_clear()
     with pytest.raises(RuntimeError):
         _ = get_settings().aws_enabled

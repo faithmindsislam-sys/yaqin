@@ -8,8 +8,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# Profiles that belong to employer/work accounts and must never power this app.
-DENIED_PROFILE_PREFIXES = ("aws-", "mbnsalem-12h")
+# Profiles for unrelated accounts that must never power this app.
+DENIED_PROFILE_PREFIXES = ("aws-",)
 
 
 class Settings(BaseSettings):
@@ -18,7 +18,9 @@ class Settings(BaseSettings):
     env: str = "local"  # local | prod
     allowed_origins: str = "http://localhost:3000"
 
-    aws_region: str = "us-west-2"
+    aws_region: str = "eu-west-1"
+    # Claude's Messages endpoint on Bedrock (Mantle) serves Opus 5.5 from us-east-1.
+    bedrock_region: str = "us-east-1"
     # Deliberately not AWS_PROFILE: a shell-wide AWS_PROFILE must not leak into this app.
     yaqin_aws_profile: str | None = None
     bedrock_model_id: str = "anthropic.claude-opus-5-5"

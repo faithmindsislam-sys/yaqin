@@ -15,6 +15,24 @@ const TIER_STYLE: Record<Tier, { cls: string; icon: typeof Info }> = {
   NONE: { cls: "bg-slate-50 text-slate-700 border-slate-200", icon: AlertTriangle },
 };
 
+/** Minimal formatting for model text: **bold** and line breaks. No HTML is interpreted. */
+function Rich({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.startsWith("**") && p.endsWith("**") ? (
+          <strong key={i} className="font-semibold">
+            {p.slice(2, -2)}
+          </strong>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
+  );
+}
+
 export function TierBadge({ tier }: { tier: Tier }) {
   const { t } = useI18n();
   const { cls, icon: Icon } = TIER_STYLE[tier] ?? TIER_STYLE.NONE;
@@ -38,7 +56,7 @@ export function AnswerView({ data, compact = false, onFollowUp }: { data: AskRes
       {data.answer.map((b, i) =>
         b.type === "text" ? (
           <p key={i} className={`whitespace-pre-line text-ink ${compact ? "text-sm" : "text-[0.98rem] leading-relaxed"}`}>
-            {b.text}
+            <Rich text={b.text} />
           </p>
         ) : (
           <SourceQuote key={i} id={b.id} source={data.sources[b.id]} compact />
