@@ -74,14 +74,12 @@ export function Notes({ lessonId }: { lessonId: string }) {
   const { t } = useI18n();
   const progress = useProgress();
   const [text, setText] = useState("");
-  const loaded = useRef(false);
-
-  useEffect(() => {
-    if (!loaded.current && progress.notes[lessonId] !== undefined) {
-      setText(progress.notes[lessonId]);
-      loaded.current = true;
-    }
-  }, [progress.notes, lessonId]);
+  const [loaded, setLoaded] = useState<{ id: string; note: string | undefined }>({ id: lessonId, note: undefined });
+  const saved = progress.notes[lessonId];
+  if (loaded.id !== lessonId || loaded.note !== saved) {
+    setLoaded({ id: lessonId, note: saved });
+    setText(saved ?? "");
+  }
 
   return (
     <section className="card p-4">

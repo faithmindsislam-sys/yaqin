@@ -4,9 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { Check } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { Skyline } from "@/components/Scenery";
 import { LangToggle, TRACK_META } from "@/components/ui";
-import { trackLessons, tracks } from "@/lib/content";
+import { useContent } from "@/lib/content";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { S } from "@/lib/strings";
@@ -20,6 +19,9 @@ const LEVELS = [
 ];
 
 export default function StartPage() {
+  const { ready } = useSession();
+  const { t } = useI18n();
+  if (!ready) return <p className="p-8">{t({ en: "Loading your account…", ar: "جارٍ تحميل حسابك…" })}</p>;
   return (
     <Suspense>
       <Onboarding />
@@ -28,6 +30,7 @@ export default function StartPage() {
 }
 
 function Onboarding() {
+  const { trackLessons, tracks } = useContent();
   const { t, lang, setLang } = useI18n();
   const { user, guest, prefs, setPrefs, startGuest } = useSession();
   const router = useRouter();
@@ -54,7 +57,6 @@ function Onboarding() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <Skyline className="pointer-events-none fixed inset-x-0 bottom-0 h-64 w-full opacity-70" />
       <header className="relative mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
         <Logo />
         <LangToggle />

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, BookCheck, CheckCircle2, ClipboardCheck, FileClock, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { SourceQuote } from "@/components/ui";
-import { reviewCheck } from "@/lib/api";
-import { allLessons, sources } from "@/lib/content";
+import { reviewCheck, staffLessons, pendingSources, approveSource, saveDraft, submitDraft, reviewDecision } from "@/lib/api";
+import { useContent } from "@/lib/content";
+import type { Lesson, Source } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { S } from "@/lib/strings";
@@ -23,14 +24,42 @@ export default function InstructorPage() {
 
 function Workspace() {
   const { t, lang } = useI18n();
-  const { role } = useSession();
+  const { role, user } = useSession();
+  const { allLessons, sources, refresh } = useContent();
   const lessons = allLessons();
-  const pending = useMemo(() => Object.values(sources).filter((s) => s.review_status === "pending"), []);
+  const [pending, setPending] = useState<Source[]>([]);
+  const [staff, setStaff] = useState<(Lesson & { author_id?: string | null })[]>([]);
+  const [note, setNote] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<CheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (role === "learner") return;
+    try {
+      const [rows, sources] = await Promise.all([staffLessons(), pendingSources()]);
+      setStaff(rows); setPending(sources);
+    } catch (e) { setError(e instanceof Error ? e.message : t(S.ask.error)); }
+  }, [role, t]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Reads the staff API; updates happen after its promise resolves.
+  useEffect(() => { void load(); }, [load]);
+
+  async function action(operation: () => Promise<unknown>, success: string) {
+    setBusy(true); setError(null); setMessage(null);
+    try {
+      await operation(); setMessage(success);
+      await load(); await refresh();
+    } catch (e) { setError(e instanceof Error ? e.message : t(S.ask.error)); }
+    finally { setBusy(false); }
+  }
+  function editedLesson() {
+    const { author_id: _author, sources_by_id: _sources, ...lesson } = JSON.parse(draft);
+    void _author; void _sources;
+    return lesson;
+  }
 
   async function run() {
     setBusy(true);
@@ -39,20 +68,39 @@ function Workspace() {
     try {
       setResult((await reviewCheck(JSON.parse(draft))) as CheckResult);
     } catch (e) {
-      setError(e instanceof SyntaxError ? "Invalid JSON" : t(S.ask.error));
+      setError(e instanceof Error ? e.message : t(S.ask.error));
     } finally {
       setBusy(false);
     }
   }
+
+  if (role === "learner") return <p className="card p-6">{t(S.instructor.restricted)}</p>;
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="font-serif text-4xl text-ink">{t(S.instructor.title)}</h1>
         <p className="mt-1 text-ink-soft">{t(S.instructor.sub)}</p>
-        {role === "learner" && <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{t(S.instructor.restricted)}</p>}
       </header>
 
+      {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {message && <p role="status" className="rounded-xl bg-teal-50 p-3 text-sm text-teal-800">{message}</p>}
+      <section className="card p-6">
+        <h2 className="font-serif text-2xl">{t({ en: "Drafts and lesson reviews", ar: "المسودات ومراجعة الدروس" })}</h2>
+        <label className="mt-4 block text-sm">{t({ en: "Review note", ar: "ملاحظة المراجعة" })}<input className="input mt-2" value={note} maxLength={4000} onChange={(e) => setNote(e.target.value)} /></label>
+        <ul className="mt-4 divide-y divide-line">{staff.map((lesson) => <li key={lesson.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+          <span>{t(lesson.title)} <span className="chip">{lesson.status}</span></span>
+          <div className="flex flex-wrap gap-2">
+            {lesson.status !== "published" && <button className="btn btn-ghost" disabled={busy} onClick={() => setDraft(JSON.stringify(lesson, null, 2))}>{t({ en: "Edit", ar: "تحرير" })}</button>}
+            {lesson.status === "draft" && lesson.author_id === user?.id && <button className="btn btn-primary" disabled={busy} onClick={() => void action(() => submitDraft(lesson.id), t({ en: "Submitted for review.", ar: "أُرسل للمراجعة." }))}>{t({ en: "Submit for review", ar: "إرسال للمراجعة" })}</button>}
+            {role === "reviewer" && lesson.status === "in_review" && <>
+              <button className="btn btn-primary" disabled={busy} onClick={() => void action(() => reviewDecision(lesson.id, "approve", note), t({ en: "Lesson published.", ar: "نُشر الدرس." }))}>{t({ en: "Approve and publish", ar: "اعتماد ونشر" })}</button>
+              <button className="btn btn-ghost" disabled={busy} onClick={() => void action(() => reviewDecision(lesson.id, "request_changes", note), t({ en: "Changes requested.", ar: "طُلبت تعديلات." }))}>{t({ en: "Request changes", ar: "طلب تعديلات" })}</button>
+            </>}
+          </div>
+        </li>)}</ul>
+        {!staff.length && <p className="mt-3 text-sm text-muted">{t({ en: "No drafts yet. Use a sample below and give the new lesson a unique id.", ar: "لا توجد مسودات. استخدم النموذج أدناه وحدّد معرّفًا جديدًا للدرس." })}</p>}
+      </section>
       <section className="grid grid-cols-2 gap-4 md:grid-cols-3">
         <Stat icon={<BookCheck className="h-6 w-6 text-teal-600" />} value={lessons.length} label={t(S.instructor.lessonsPublished)} />
         <Stat icon={<FileClock className="h-6 w-6 text-amber-600" />} value={pending.length} label={t(S.instructor.sourcesPending)} />
@@ -74,9 +122,10 @@ function Workspace() {
                   </span>
                   <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs text-amber-800">pending</span>
                 </button>
+                {role === "reviewer" && preview === s.id && <button className="btn btn-primary mt-3" disabled={busy} onClick={() => void action(() => approveSource(s.id), t({ en: "Source approved.", ar: "اعتُمد المصدر." }))}>{t({ en: "Approve verified source", ar: "اعتماد المصدر بعد التحقق" })}</button>}
                 {preview === s.id && (
                   <div className="mt-3">
-                    <SourceQuote id={s.id} compact />
+                    <SourceQuote id={s.id} source={s} compact />
                   </div>
                 )}
               </li>
@@ -88,7 +137,8 @@ function Workspace() {
           <h2 className="font-serif text-2xl text-ink">{t(S.instructor.aiCheck)}</h2>
           <p className="mt-1 text-sm text-ink-soft">{t(S.instructor.aiCheckSub)}</p>
           <textarea className="input mt-4 min-h-48 font-mono text-xs" dir="ltr" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder='{ "id": "...", "cards": [...] }' />
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className="btn btn-primary" disabled={busy || !draft.trim()} onClick={() => void action(() => saveDraft(editedLesson()), t({ en: "Draft saved. Submit it from the draft list above.", ar: "حُفظت المسودة. أرسلها من القائمة أعلاه." }))}>{t({ en: "Save draft", ar: "حفظ المسودة" })}</button>
             <button className="btn btn-primary" onClick={run} disabled={busy || !draft.trim()}>
               {busy ? t(S.ask.thinking) : t(S.instructor.run)}
             </button>
@@ -98,7 +148,7 @@ function Workspace() {
               </button>
             )}
           </div>
-          {error && <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+
           {result && (
             <div className="mt-5 space-y-3">
               <p className={`flex items-center gap-2 font-semibold ${result.ready_for_reviewer ? "text-teal-700" : "text-amber-800"}`}>

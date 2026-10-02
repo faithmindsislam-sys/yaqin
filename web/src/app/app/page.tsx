@@ -7,7 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { Skyline } from "@/components/Scenery";
 import { CardVisual } from "@/components/Visuals";
 import { TRACK_META } from "@/components/ui";
-import { getTrack, trackLessons, tracks } from "@/lib/content";
+import { useContent } from "@/lib/content";
 import { useI18n } from "@/lib/i18n";
 import { streak, useProgress } from "@/lib/progress";
 import { displayName, useSession } from "@/lib/session";
@@ -22,6 +22,7 @@ export default function Dashboard() {
 }
 
 function DashboardBody() {
+  const { getTrack, trackLessons, tracks } = useContent();
   const { t } = useI18n();
   const { user, guest, prefs, setPrefs } = useSession();
   const progress = useProgress();

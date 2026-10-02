@@ -29,7 +29,7 @@ export function ExplainBack({ lesson, onDone }: { lesson: Lesson; onDone: () => 
     try {
       const r = await explainBack({ lesson_id: lesson.id, transcript: text, lang });
       setResult(r);
-      onDone();
+      if (!r.awaiting_review) onDone();
     } catch {
       setError(t(S.ask.error));
     } finally {
@@ -87,7 +87,7 @@ export function ExplainBack({ lesson, onDone }: { lesson: Lesson; onDone: () => 
               </ul>
             </div>
           )}
-          {result.missed.length > 0 && (
+          {!result.awaiting_review && result.missed.length > 0 && (
             <div className="rounded-2xl border border-rose/30 bg-rose/5 p-4">
               <p className="mb-2 font-semibold text-rose">{t(S.lesson.missed)}</p>
               <ul className="space-y-3">

@@ -213,6 +213,11 @@ async def explain_back(store: Store, req: ExplainRequest) -> dict | None:
     idea_ids = [i["id"] for i in ideas]
     lesson_ids = lesson_source_ids(lesson)
     sources = await store.get_sources(lesson_ids)
+    if any(sid not in sources or sources[sid].get("review_status") != "approved" for sid in lesson_ids):
+        return {"covered": [], "missed": [i["id"] for i in ideas], "misconceptions": [],
+                "feedback": {"en": "This lesson is awaiting source approval. Please try again after scholarly review.",
+                             "ar": "هذا الدرس ينتظر اعتماد المصادر. يرجى المحاولة بعد المراجعة العلمية."}[req.lang],
+                "sources": {}, "ai_generated": False, "awaiting_review": True}
     lang = req.lang
 
     checklist = "\n".join(f"- {i['id']}: {i.get('en')} / {i.get('ar')}" + (f" (source {i['source']})" if i.get("source") else "")

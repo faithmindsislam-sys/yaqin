@@ -29,7 +29,7 @@ the task role is used.
 
 ## Database
 
-Apply `../supabase/migrations/0001_init.sql` to the Supabase project, set
+Apply the migrations in the order documented in [Supabase setup](../docs/SUPABASE_SETUP.md), including `0002_source_extra.sql`, to the Supabase project, set
 `DATABASE_URL` (the pooler connection string) and seed:
 
 ```bash
@@ -37,7 +37,7 @@ Apply `../supabase/migrations/0001_init.sql` to the Supabase project, set
 .venv/bin/python -m scripts.seed --no-embed # keyword index only
 ```
 
-Re-running is safe: rows are upserted and unchanged chunks keep their embeddings.
+Re-running preserves persisted sources, lesson edits, curriculum updates and approvals; unchanged chunks keep their embeddings.
 
 ## Fetch verbatim sources
 
@@ -68,3 +68,5 @@ Build from the repository root (the image bundles `content/`):
 docker build -f api/Dockerfile -t yaqin-api .
 docker run -p 8000:8000 --env-file api/.env yaqin-api
 ```
+
+Login and database configuration: [Supabase setup](../docs/SUPABASE_SETUP.md).

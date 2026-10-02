@@ -41,7 +41,7 @@ def test_learner_cannot_review(client, es256):
     assert r.status_code == 403 and r.json()["error"]["code"] == "forbidden"
 
 
-@pytest.mark.parametrize("bad", [{"aud": "anon"}, {"iss": "https://evil.example/auth/v1"}, {"exp": int(time.time()) - 10}])
+@pytest.mark.parametrize("bad", [{"aud": "anon"}, {"iss": "https://evil.example/auth/v1"}, {"exp": int(time.time()) - 10}, {"sub": "invalid-uuid"}])
 def test_wrong_audience_issuer_or_expired_rejected(client, es256, bad):
     r = client.get("/api/review/queue", headers={"Authorization": f"Bearer {es256(**bad)}"})
     assert r.status_code == 401

@@ -5,34 +5,39 @@ import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { S } from "@/lib/strings";
 import { LangToggle } from "./ui";
-import { Logo, Mark } from "./Logo";
+import { Logo } from "./Logo";
+import { Menu } from "lucide-react";
 
 export function SiteHeader() {
   const { t } = useI18n();
   const { user, guest } = useSession();
   const inApp = !!user || guest;
   return (
-    <header className="relative z-20 mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
-      <Logo />
-      <nav className="hidden items-center gap-7 text-sm text-ink-soft md:flex">
-        <Link href="/" className="font-medium text-teal-700">{t(S.nav.home)}</Link>
-        <Link href="/library/" className="hover:text-ink">{t(S.nav.library)}</Link>
-        <Link href="/ask/" className="hover:text-ink">{t(S.nav.ask)}</Link>
-        <Link href="/#sources" className="hover:text-ink">{t(S.nav.sources)}</Link>
-        <Link href="/instructor/" className="hover:text-ink">{t(S.nav.educators)}</Link>
-      </nav>
-      <div className="flex items-center gap-2.5">
-        <LangToggle className="hidden sm:inline-flex" />
-        {inApp ? (
-          <Link href="/app/" className="btn btn-primary !py-2 text-sm">{t(S.nav.dashboard)}</Link>
-        ) : (
-          <>
-            <Link href="/signin/" className="btn btn-ghost !py-2 text-sm">{t(S.nav.signIn)}</Link>
-            <Link href="/start/" className="btn btn-primary !py-2 text-sm">
-              {t(S.nav.getStarted)} <span aria-hidden className="rtl:rotate-180">→</span>
-            </Link>
-          </>
-        )}
+    <header className="site-header relative z-20">
+      <div className="site-header-inner">
+        <Logo />
+        <nav className="site-nav desktop-nav" aria-label={t({ en: "Main navigation", ar: "التنقل الرئيسي" })}>
+          <Link href="/library/">{t(S.nav.library)}</Link>
+          <Link href="/ask/">{t(S.nav.ask)}</Link>
+          <Link href="/#sources">{t(S.nav.sources)}</Link>
+        </nav>
+        <div className="flex items-center gap-3">
+          <LangToggle className="header-lang" />
+          {!inApp && <Link href="/signin/" className="header-signin text-sm text-ink-soft hover:text-teal-700">{t(S.nav.signIn)}</Link>}
+          <Link href={inApp ? "/app/" : "/start/"} className="btn btn-primary text-sm">
+            {t(inApp ? S.nav.dashboard : S.nav.getStarted)}
+          </Link>
+          <details className="mobile-menu">
+            <summary aria-label={t({ en: "Navigation menu", ar: "قائمة التنقل" })}><Menu className="h-5 w-5" /></summary>
+            <nav className="site-nav" aria-label={t({ en: "Mobile navigation", ar: "التنقل على الهاتف" })}>
+              <Link href="/library/">{t(S.nav.library)}</Link>
+              <Link href="/ask/">{t(S.nav.ask)}</Link>
+              <Link href="/#sources">{t(S.nav.sources)}</Link>
+              {!inApp && <Link href="/signin/">{t(S.nav.signIn)}</Link>}
+              <LangToggle />
+            </nav>
+          </details>
+        </div>
       </div>
     </header>
   );
@@ -44,9 +49,8 @@ export function SiteFooter() {
     <footer className="border-t border-line bg-white/70">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-8 sm:px-8 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <Mark size={34} />
+          <Logo compact />
           <div>
-            <p className="font-serif text-lg text-ink">Yaqin · يقين</p>
             <p className="text-sm text-ink-soft">{t(S.footer.line)}</p>
           </div>
         </div>

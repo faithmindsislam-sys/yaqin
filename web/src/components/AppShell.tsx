@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { BookOpen, ClipboardCheck, Home, LibraryBig, LogOut, MessagesSquare } from "lucide-react";
+import { ClipboardCheck, Home, LibraryBig, LogOut, MessagesSquare } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { displayName, useSession } from "@/lib/session";
 import { S } from "@/lib/strings";
-import { hydrateFromRemote } from "@/lib/progress";
 import { Logo } from "./Logo";
-import { Skyline } from "./Scenery";
 import { LangToggle } from "./ui";
 
 const NAV = [
@@ -22,7 +20,7 @@ const NAV = [
 /** Signed-in (or guest) application frame: sidebar on desktop, bottom bar on mobile. */
 export function AppShell({ children, requireSession = true }: { children: React.ReactNode; requireSession?: boolean }) {
   const { t } = useI18n();
-  const { ready, user, guest, role, signOut } = useSession();
+  const { ready, user, guest, role, signOut, syncError, authError, retrySync } = useSession();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -30,9 +28,6 @@ export function AppShell({ children, requireSession = true }: { children: React.
     if (ready && requireSession && !user && !guest) router.replace("/signin/");
   }, [ready, requireSession, user, guest, router]);
 
-  useEffect(() => {
-    if (user) void hydrateFromRemote();
-  }, [user]);
 
   const items = NAV.filter((n) => !n.staff || role !== "learner");
   const name = displayName(user);
@@ -50,6 +45,7 @@ export function AppShell({ children, requireSession = true }: { children: React.
             return (
               <Link
                 key={href}
+                aria-current={active ? "page" : undefined}
                 href={href}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
                   active ? "bg-teal-50 font-semibold text-teal-700" : "text-ink-soft hover:bg-sky-50"
@@ -61,11 +57,7 @@ export function AppShell({ children, requireSession = true }: { children: React.
             );
           })}
         </nav>
-        <div className="relative mt-auto overflow-hidden rounded-2xl bg-gradient-to-b from-white to-teal-50 p-4">
-          <Skyline className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full opacity-60" />
-          <p className="relative font-serif text-lg italic leading-snug text-ink-soft">{t(S.dash.keepGoing)}</p>
-          <div className="relative h-12" />
-        </div>
+        <p className="mt-auto px-3 py-6 text-sm leading-relaxed text-muted">{t(S.motto)}</p>
         <div className="mt-4 flex items-center justify-between gap-2 px-1">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-ink">{name ?? (guest ? (t({ en: "Guest", ar: "زائر" })) : "")}</p>
@@ -78,18 +70,25 @@ export function AppShell({ children, requireSession = true }: { children: React.
       </aside>
 
       <div className="min-w-0 pb-20 lg:pb-0">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-sky-50/85 px-4 py-3 backdrop-blur sm:px-6 lg:justify-end">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-sky-50/95 px-4 py-3 backdrop-blur sm:px-6 lg:justify-end">
           <div className="lg:hidden">
             <Logo compact href="/app/" />
           </div>
           <LangToggle />
         </header>
-        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+          {(syncError || authError) && <div role="alert" className="mb-5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+            <p>{t({ en: "Your changes are saved on this device, but account sync needs attention.", ar: "حُفظت تغييراتك على هذا الجهاز، لكن مزامنة الحساب تحتاج إلى معالجة." })}</p>
+            <p>{syncError ?? authError}</p>
+            <button className="mt-2 underline" onClick={() => void retrySync()}>{t({ en: "Retry sync", ar: "إعادة المزامنة" })}</button>
+          </div>}
+          {ready || !requireSession ? children : <p>{t({ en: "Loading your account…", ar: "جارٍ تحميل حسابك…" })}</p>}
+        </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-white/95 backdrop-blur lg:hidden">
-        {[...items.slice(0, 3), { href: "/library/", icon: BookOpen, label: S.nav.learn }].slice(0, 4).map(({ href, icon: Icon, label }, i) => (
-          <Link key={href + i} href={href} className={`flex flex-col items-center gap-1 py-2.5 text-[0.7rem] ${pathname?.startsWith(href.replace(/\/$/, "")) ? "text-teal-700" : "text-muted"}`}>
+      <nav aria-label={t({ en: "Learning navigation", ar: "التنقل في التعلّم" })} className="fixed inset-x-0 bottom-0 z-40 grid border-t border-line bg-white/95 backdrop-blur lg:hidden" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)`, paddingBottom: "env(safe-area-inset-bottom)" }}>
+        {items.map(({ href, icon: Icon, label }) => (
+          <Link key={href} href={href} aria-current={pathname?.startsWith(href.replace(/\/$/, "")) ? "page" : undefined} className={`flex flex-col items-center gap-1 py-2.5 text-[0.7rem] ${pathname?.startsWith(href.replace(/\/$/, "")) ? "text-teal-700" : "text-muted"}`}>
             <Icon className="h-5 w-5" />
             {t(label)}
           </Link>

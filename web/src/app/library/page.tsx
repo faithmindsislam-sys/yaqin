@@ -6,7 +6,7 @@ import { Clock, Layers, Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CardVisual } from "@/components/Visuals";
 import { TRACK_META } from "@/components/ui";
-import { allLessons, tracks } from "@/lib/content";
+import { useContent } from "@/lib/content";
 import { useI18n } from "@/lib/i18n";
 import { useProgress } from "@/lib/progress";
 import { S } from "@/lib/strings";
@@ -21,6 +21,7 @@ export default function LibraryPage() {
 }
 
 function Library() {
+  const { allLessons, tracks } = useContent();
   const { t } = useI18n();
   const progress = useProgress();
   const [filter, setFilter] = useState<TrackId | "all">("all");
@@ -34,7 +35,7 @@ function Library() {
       const hay = [l.title.en, l.title.ar, l.summary.en, l.summary.ar, ...l.cards.flatMap((c) => [c.title.en, c.title.ar])].join(" ").toLowerCase();
       return hay.includes(q);
     });
-  }, [filter, query]);
+  }, [filter, query, allLessons]);
 
   return (
     <div className="space-y-6">
@@ -45,7 +46,7 @@ function Library() {
 
       <div className="relative">
         <Search className="absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-        <input className="input !rounded-full ps-11" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t(S.library.search)} />
+        <input className="input !rounded-full ps-11" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t(S.library.search)} aria-label={t(S.library.search)} />
       </div>
 
       <div className="flex flex-wrap gap-2">

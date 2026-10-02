@@ -9,7 +9,8 @@
     "prebuild": "node scripts/bundle-content.mjs",
     "build": "next build",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:progress": "node scripts/check-progress.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

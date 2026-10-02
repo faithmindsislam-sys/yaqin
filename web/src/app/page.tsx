@@ -1,146 +1,72 @@
 "use client";
 
 import Link from "next/link";
-import {
-  BadgeCheck,
-  BookOpenText,
-  Bot,
-  ChartNoAxesColumnIncreasing,
-  Cpu,
-  Landmark,
-  Languages,
-  Layers,
-  Mic,
-  ScrollText,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
+import { ArrowUpRight, BookOpenText, Check, Languages, ShieldCheck } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
-import { ArchFrame, Skyline, StarPattern } from "@/components/Scenery";
 import { ArrowLink, SourceQuote, TRACK_META } from "@/components/ui";
-import { tracks, trackLessons } from "@/lib/content";
+import { useContent } from "@/lib/content";
 import { useI18n } from "@/lib/i18n";
 import { S } from "@/lib/strings";
 
 export default function Landing() {
+  const { tracks, trackLessons } = useContent();
   const { t } = useI18n();
-
-  const pillars = [
-    { icon: BookOpenText, title: S.pillars.sources, sub: S.pillars.sourcesSub },
-    { icon: Cpu, title: S.pillars.ai, sub: S.pillars.aiSub },
-    { icon: Users, title: S.pillars.everyone, sub: S.pillars.everyoneSub },
-    { icon: Languages, title: S.pillars.langs, sub: S.pillars.langsSub },
-  ];
-
-  const trust = [
-    { icon: BookOpenText, title: S.trust.quran, sub: S.trust.quranSub },
-    { icon: ScrollText, title: S.trust.hadith, sub: S.trust.hadithSub },
-    { icon: Landmark, title: S.trust.tafsir, sub: S.trust.tafsirSub },
-    { icon: BadgeCheck, title: S.trust.review, sub: S.trust.reviewSub },
-    { icon: Layers, title: S.trust.levels, sub: S.trust.levelsSub },
-  ];
-
-  const features = [
-    { icon: BookOpenText, title: S.features.lessons, sub: S.features.lessonsSub, href: "/library/" },
-    { icon: Bot, title: S.features.tutor, sub: S.features.tutorSub, href: "/ask/" },
-    { icon: Mic, title: S.features.explain, sub: S.features.explainSub, href: "/library/" },
-    { icon: ChartNoAxesColumnIncreasing, title: S.features.progress, sub: S.features.progressSub, href: "/start/" },
-  ];
-
   return (
-    <div className="relative overflow-hidden">
-      <StarPattern className="pointer-events-none absolute inset-0 h-full w-full text-teal-200/40" />
+    <div className="landing">
       <SiteHeader />
-
-      {/* Hero */}
-      <section className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 px-5 pb-10 pt-4 sm:px-8 lg:grid-cols-[1.05fr_1fr]">
-        <div className="rise">
-          <p className="eyebrow">{t(S.hero.eyebrow)}</p>
-          <h1 className="mt-4 font-serif text-[2.6rem] leading-[1.08] text-ink sm:text-6xl">
-            {t(S.hero.title1)}
-            <br />
-            <span className="italic text-teal-600">{t(S.hero.title2)}</span>
-          </h1>
-          <div className="my-6 h-0.5 w-16 bg-teal-400" />
-          <p className="max-w-xl text-lg text-ink-soft">{t(S.hero.sub)}</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/start/" className="btn btn-primary">
-              {t(S.hero.cta)} <span aria-hidden className="rtl:rotate-180">→</span>
-            </Link>
-            <Link href="/ask/" className="btn btn-ghost">
-              <Bot className="h-4 w-4 text-teal-600" /> {t(S.hero.cta2)}
-            </Link>
-          </div>
-        </div>
-
-        <div className="relative rise [animation-delay:120ms]">
-          <div className="relative aspect-[5/4] overflow-hidden rounded-[2rem] bg-gradient-to-b from-sky-100 via-white to-teal-50 shadow-[var(--shadow-lift)]">
-            <Skyline className="absolute inset-x-0 bottom-0 h-[78%] w-full" />
-            <ArchFrame className="absolute -end-6 bottom-0 h-[92%] opacity-95" />
-            <div className="absolute inset-x-6 top-6 max-w-sm sm:inset-x-8 sm:top-8">
-              <SourceQuote id="quran:20:114" compact />
+      <main id="main-content" className="landing-container">
+        <section className="landing-hero">
+          <div className="rise">
+            <p className="eyebrow">{t(S.hero.eyebrow)}</p>
+            <h1 className="hero-title font-serif text-ink">
+              {t(S.hero.title1)} <span className="text-teal-700">{t(S.hero.title2)}</span>
+            </h1>
+            <p className="hero-sub">{t({
+              en: "A little learning. A deeper understanding. Explore Islam through short, clear lessons in Arabic and English, with sources you can check.",
+              ar: "تعلّم قليلًا، وافهم بعمق. اكتشف الإسلام من خلال دروس قصيرة وواضحة بالعربية والإنجليزية، مع مصادر يمكنك الرجوع إليها.",
+            })}</p>
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Link href="/start/" className="btn btn-primary">{t(S.hero.cta)} <span aria-hidden className="rtl:rotate-180">→</span></Link>
+              <Link href="/library/" className="btn btn-ghost">{t({ en: "Explore the lessons", ar: "تصفّح الدروس" })}</Link>
             </div>
+            <p className="hero-note"><Check className="h-3.5 w-3.5" aria-hidden />{t({ en: "Learn at your pace. No account needed to begin.", ar: "تعلّم على مهل. لا تحتاج إلى حساب لتبدأ." })}</p>
           </div>
-        </div>
-      </section>
+          <div className="verse-panel rise">
+            <p className="verse-heading eyebrow">{t({ en: "A journey that begins with knowledge", ar: "رحلة تبدأ بالعلم" })}</p>
+            <SourceQuote id="quran:20:114" compact />
+          </div>
+        </section>
 
-      {/* Pillars */}
-      <section className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {pillars.map(({ icon: Icon, title, sub }) => (
-            <div key={title.en} className="flex items-center gap-3 rounded-2xl border border-line bg-white/80 px-4 py-3 backdrop-blur">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal-50 text-teal-600">
-                <Icon className="h-5 w-5" />
-              </span>
-              <span>
-                <span className="block text-sm font-semibold text-ink">{t(title)}</span>
-                <span className="block text-xs text-muted">{t(sub)}</span>
-              </span>
-            </div>
-          ))}
+        <div className="landing-proof">
+          <span><BookOpenText className="h-4 w-4 text-teal-700" aria-hidden />{t({ en: "Sources you can trace", ar: "مصادر يمكنك تتبّعها" })}</span>
+          <span><Languages className="h-4 w-4 text-teal-700" aria-hidden />{t(S.pillars.langsSub)}</span>
+          <span><ShieldCheck className="h-4 w-4 text-teal-700" aria-hidden />{t({ en: "Your learning, your pace", ar: "تعلّمك، على مهل" })}</span>
         </div>
-      </section>
 
-      <main className="relative z-10 mx-auto flex max-w-7xl flex-col gap-6 px-5 py-10 sm:px-8">
-        {/* Tracks */}
-        <section className="card p-5 sm:p-7" id="tracks">
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <section className="landing-section" id="tracks">
+          <div className="section-intro">
             <div>
-              <h2 className="font-serif text-3xl text-ink">{t(S.journey.title)}</h2>
-              <p className="mt-1 max-w-2xl text-sm text-ink-soft">{t(S.journey.sub)}</p>
+              <p className="eyebrow mb-3">{t({ en: "A place for every beginning", ar: "مكان لكل بداية" })}</p>
+              <h2 className="font-serif text-ink">{t(S.journey.title)}</h2>
+              <p>{t({ en: "Choose what feels right for you today. You can always change your path.", ar: "اختر ما يناسبك اليوم. يمكنك تغيير مسارك في أي وقت." })}</p>
             </div>
-            <ArrowLink href="/library/">{t(S.nav.library)}</ArrowLink>
+            <ArrowLink href="/library/">{t({ en: "View all lessons", ar: "جميع الدروس" })}</ArrowLink>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="track-grid">
             {tracks.map((track) => {
               const meta = TRACK_META[track.id];
               const Icon = meta.icon;
-              const count = trackLessons(track.id).length;
               return (
-                <Link
-                  key={track.id}
-                  href={`/start/?track=${track.id}`}
-                  className={`group relative overflow-hidden rounded-2xl border border-line bg-gradient-to-br ${meta.tint} p-5 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]`}
-                >
-                  <Skyline className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full opacity-40" tone={track.id === "explore" ? "sky" : "teal"} />
-                  <div className="relative flex items-start gap-4">
-                    <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-full ${meta.ring}`}>
-                      <Icon className="h-7 w-7" />
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="font-serif text-xl text-ink">{t(track.title)}</h3>
-                      <p className="mt-1 text-sm text-ink-soft">{t(track.tagline)}</p>
-                      <p className="mt-1 text-xs text-muted">{t(track.audience)}</p>
-                    </div>
-                    <span className="ms-auto grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line bg-white text-ink-soft transition group-hover:border-teal-300 group-hover:text-teal-700">
-                      <span aria-hidden className="rtl:rotate-180">›</span>
-                    </span>
+                <Link key={track.id} href={`/start/?track=${track.id}`} className="track-card group">
+                  <div className="flex items-center justify-between">
+                    <span className={`grid h-12 w-12 place-items-center rounded-xl ${meta.ring}`}><Icon className="h-6 w-6" aria-hidden /></span>
+                    <ArrowUpRight className="h-5 w-5 text-muted transition group-hover:text-teal-700 rtl:-scale-x-100" aria-hidden />
                   </div>
-                  <div className="relative mt-5 flex flex-wrap gap-2">
-                    {meta.tags.map((tag) => (
-                      <span key={tag.en} className="chip">{t(tag)}</span>
-                    ))}
-                    {count > 0 && <span className="chip border-teal-200 text-teal-700">{count} {t(S.library.lessons)}</span>}
+                  <h3 className="font-serif text-ink">{t(track.title)}</h3>
+                  <p>{t(track.tagline)}</p>
+                  <div className="track-card-bottom">
+                    <span>{trackLessons(track.id).length} {t(S.library.lessons)}</span>
+                    <span className="font-medium text-teal-700">{t({ en: "Start this path", ar: "ابدأ هذا المسار" })} <span aria-hidden className="inline-block rtl:rotate-180">→</span></span>
                   </div>
                 </Link>
               );
@@ -148,55 +74,20 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Sources */}
-        <section className="grid gap-6 lg:grid-cols-[1fr_22rem]" id="sources">
-          <div className="card p-5 sm:p-7">
-            <h2 className="font-serif text-3xl text-ink">{t(S.trust.title)}</h2>
-            <p className="mt-1 text-sm text-ink-soft">{t(S.trust.sub)}</p>
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-              {trust.map(({ icon: Icon, title, sub }) => (
-                <div key={title.en} className="rounded-2xl border border-line p-4">
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-teal-50 text-teal-600">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <p className="mt-3 text-sm font-semibold text-ink">{t(title)}</p>
-                  <p className="text-xs text-muted">{t(sub)}</p>
-                </div>
-              ))}
-            </div>
+        <section className="trust-panel" id="sources">
+          <div>
+            <p className="eyebrow">{t({ en: "Clarity begins with trust", ar: "الوضوح يبدأ بالثقة" })}</p>
+            <h2 className="font-serif">{t({ en: "Learn with the source in sight.", ar: "تعلّم والمصدر أمامك." })}</h2>
+            <p className="mt-4">{t({ en: "Qur’an, hadith, and scholarly explanations. Revealed text is shown verbatim, and sources stay visible so you can explore further.", ar: "القرآن والحديث وشروح أهل العلم. يُعرض النص الشرعي بنصّه، وتبقى المصادر ظاهرة لتتمكّن من الرجوع إليها." })}</p>
           </div>
-          <div className="card relative overflow-hidden p-6" id="method">
-            <ShieldCheck className="h-8 w-8 text-teal-600" />
-            <h3 className="mt-3 font-serif text-2xl text-ink">{t(S.promise.title)}</h3>
-            <ul className="mt-4 space-y-3 text-sm text-ink-soft">
-              {[S.promise.p1, S.promise.p2, S.promise.p3, S.promise.p4].map((p) => (
-                <li key={p.en} className="flex gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-400" />
-                  {t(p)}
-                </li>
-              ))}
+          <div id="method">
+            <h3 className="mb-5 text-lg font-medium">{t(S.promise.title)}</h3>
+            <ul className="space-y-4">
+              {[S.promise.p1, S.promise.p2, S.promise.p3].map((promise) => <li key={promise.en}><Check className="h-4 w-4" aria-hidden /><span>{t(promise)}</span></li>)}
             </ul>
           </div>
         </section>
-
-        {/* Features */}
-        <section className="card p-5 sm:p-7">
-          <h2 className="font-serif text-3xl text-ink">{t(S.features.title)}</h2>
-          <p className="mt-1 text-sm text-ink-soft">{t(S.features.sub)}</p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map(({ icon: Icon, title, sub, href }) => (
-              <Link key={title.en} href={href} className="group rounded-2xl border border-line bg-gradient-to-b from-white to-sky-50 p-5 transition hover:border-teal-300">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-teal-50 text-teal-600 transition group-hover:bg-teal-100">
-                  <Icon className="h-6 w-6" />
-                </span>
-                <h3 className="mt-4 text-base font-semibold text-ink">{t(title)}</h3>
-                <p className="mt-1 text-sm text-ink-soft">{t(sub)}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
       </main>
-
       <SiteFooter />
     </div>
   );

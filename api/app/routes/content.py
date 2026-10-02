@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
 from ..auth import User, current_user
 from ..db import get_store
@@ -6,6 +6,12 @@ from ..errors import ApiError
 from ..retrieval import lesson_source_ids
 
 router = APIRouter()
+
+
+@router.get("/content")
+async def content_bundle(response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    return await get_store().content_bundle()
 
 
 @router.get("/tracks")
@@ -18,7 +24,7 @@ async def lesson(lesson_id: str, user: User = Depends(current_user)):
     store = get_store()
     staff = user.role in ("instructor", "reviewer")
     data = await store.get_lesson(lesson_id, include_unpublished=staff)
-    if data is None:
+    if data is None or (data.get("status") != "published" and user.role != "reviewer" and data.get("author_id") != user.id):
         raise ApiError(404, "not_found", f"No lesson '{lesson_id}'.")
     return {**data, "sources_by_id": await store.get_sources(lesson_source_ids(data))}
 

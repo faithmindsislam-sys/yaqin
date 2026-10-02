@@ -9,7 +9,7 @@ import { CardView } from "@/components/lesson/CardView";
 import { ExplainBack } from "@/components/lesson/ExplainBack";
 import { Quiz } from "@/components/lesson/Quiz";
 import { Companion, Notes, Steps } from "@/components/lesson/SidePanel";
-import { getLesson, getTrack, nextLessonAfter } from "@/lib/content";
+import { useContent } from "@/lib/content";
 import { useI18n } from "@/lib/i18n";
 import { useLessonProgress } from "@/lib/progress";
 import { S } from "@/lib/strings";
@@ -27,6 +27,7 @@ export default function LessonPage() {
 }
 
 function LessonPlayer() {
+  const { getLesson, getTrack, nextLessonAfter } = useContent();
   const { t } = useI18n();
   const params = useSearchParams();
   const router = useRouter();

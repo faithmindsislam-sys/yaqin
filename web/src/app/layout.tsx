@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Amiri_Quran, DM_Serif_Display, Readex_Pro } from "next/font/google";
 import { I18nProvider } from "@/lib/i18n";
 import { SessionProvider } from "@/lib/session";
+import { ContentProvider } from "@/lib/content";
 import "./globals.css";
 
 const readex = Readex_Pro({ variable: "--font-readex", subsets: ["latin", "arabic"], display: "swap" });
@@ -27,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" dir="ltr" className={`${readex.variable} ${dmSerif.variable} ${amiriQuran.variable}`} suppressHydrationWarning>
       <body className="min-h-screen">
         <I18nProvider>
-          <SessionProvider>{children}</SessionProvider>
+          <SessionProvider><ContentProvider>{children}</ContentProvider></SessionProvider>
         </I18nProvider>
       </body>
     </html>

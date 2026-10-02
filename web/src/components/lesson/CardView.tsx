@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { BookMarked, MessageCircleQuestion, Pause, Volume2, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { sources as allSources } from "@/lib/content";
+import { useContent } from "@/lib/content";
 import { S } from "@/lib/strings";
 import type { Card, Lesson } from "@/lib/types";
 import { useNarration } from "@/lib/voice";
@@ -17,6 +17,7 @@ const LABELS = {
 } as const;
 
 export function CardView({ lesson, card, onAsk }: { lesson: Lesson; card: Card; onAsk: (q: string) => void }) {
+  const { sources: allSources } = useContent();
   const { t, lang } = useI18n();
   const narration = useNarration();
   const [showSources, setShowSources] = useState(false);

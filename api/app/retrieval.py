@@ -55,5 +55,5 @@ async def retrieve(store: Store, query: str, *, lesson: dict | None = None, k: i
 
     ranked = sorted(scores, key=lambda i: -scores[i])[: k + len(lesson_source_ids(lesson))]
     found = await store.get_sources(ranked)
-    ordered = {i: found[i] for i in ranked if i in found}
+    ordered = {i: found[i] for i in ranked if i in found and found[i].get("review_status") == "approved"}
     return Retrieved(ordered, {i: round(scores[i], 4) for i in ordered})

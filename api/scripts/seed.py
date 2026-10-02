@@ -79,19 +79,25 @@ async def main(argv: list[str] | None = None) -> int:
         async with conn.transaction():
             await conn.executemany(
                 f"insert into sources ({', '.join(SOURCE_COLS)}, extra) values ({', '.join(f'${i + 1}' for i in range(len(SOURCE_COLS) + 1))}) "
-                "on conflict (id) do update set " + ", ".join(f"{c} = excluded.{c}" for c in (*SOURCE_COLS[1:], "extra")) + ", updated_at = now()",
+                "on conflict (id) do nothing",
                 [tuple(src.get(c) for c in SOURCE_COLS) + (source_extra(src),) for src in sources.values()],
             )
             await conn.executemany(
                 "insert into lessons (id, track, module, status, data) values ($1, $2, $3, $4, $5) "
-                "on conflict (id) do update set track = excluded.track, module = excluded.module, "
-                "status = excluded.status, data = excluded.data, updated_at = now()",
+                "on conflict (id) do nothing",
                 [(l["id"], l["track"], l["module"], l.get("status", "draft"), l) for l in lessons.values()],
             )
             await conn.execute(
                 "insert into app_config (key, data) values ('tracks', $1) "
-                "on conflict (key) do update set data = excluded.data, updated_at = now()", tracks)
+                "on conflict (key) do nothing", tracks)
 
+        # Index persisted content, so reseeding never rolls back staff edits or approvals.
+        sources = {}
+        for row in await conn.fetch("select * from sources"):
+            source = dict(row)
+            extra = source.pop("extra", None) or {}
+            sources[source["id"]] = {**extra, **source}
+        lessons = {row["id"]: {**row["data"], "status": row["status"]} for row in await conn.fetch("select id, data, status from lessons where status = 'published'")}
         chunks = [c for src in sources.values() for c in source_chunks(src)]
         chunks += [c for l in lessons.values() for c in lesson_chunks(l) if c["source_id"] in sources]
         existing = {r["id"]: r["content"] for r in await conn.fetch(

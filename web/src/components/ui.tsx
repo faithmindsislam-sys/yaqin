@@ -4,7 +4,7 @@ import Link from "next/link";
 import { BookOpen, Compass, Languages, Sprout } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { S } from "@/lib/strings";
-import { sources as allSources } from "@/lib/content";
+import { useContent } from "@/lib/content";
 import type { Source, TrackId } from "@/lib/types";
 
 export const TRACK_META: Record<TrackId, { icon: typeof Compass; tint: string; ring: string; tags: { en: string; ar: string }[] }> = {
@@ -61,6 +61,7 @@ export function LangToggle({ className = "" }: { className?: string }) {
 
 /** Revealed text, always rendered verbatim from the sources table. */
 export function SourceQuote({ id, source, compact = false }: { id: string; source?: Source; compact?: boolean }) {
+  const { sources: allSources } = useContent();
   const { t, lang } = useI18n();
   const s = source ?? allSources[id];
   if (!s) return null;

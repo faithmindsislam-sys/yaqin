@@ -102,6 +102,7 @@ export interface AskResponse {
 }
 
 export interface ExplainBackResponse {
+  awaiting_review?: boolean;
   covered: string[];
   missed: string[];
   misconceptions: { text: string; correction: string; source?: string }[];

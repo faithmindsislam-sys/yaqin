@@ -5,6 +5,7 @@ as an opt-in fallback."""
 from __future__ import annotations
 
 import asyncio
+import uuid
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -38,14 +39,15 @@ def _decode(token: str) -> dict:
     s = get_settings()
     header = jwt.get_unverified_header(token)
     if header.get("alg") == "HS256":
-        if not s.supabase_jwt_secret:
+        if not s.supabase_jwt_secret or not s.supabase_url:
             raise jwt.InvalidTokenError("HS256 token but no legacy secret configured")
-        return jwt.decode(token, s.supabase_jwt_secret, algorithms=["HS256"], audience="authenticated")
+        return jwt.decode(token, s.supabase_jwt_secret, algorithms=["HS256"], audience="authenticated",
+                          issuer=f"{s.supabase_url.rstrip('/')}/auth/v1", options={"require": ["sub", "exp", "aud", "iss"]})
     if not s.supabase_url:
         raise jwt.InvalidTokenError("SUPABASE_URL not configured")
     key = _jwks().get_signing_key_from_jwt(token)
     return jwt.decode(token, key.key, algorithms=["ES256", "RS256"], audience="authenticated",
-                      issuer=f"{s.supabase_url.rstrip('/')}/auth/v1")
+                      issuer=f"{s.supabase_url.rstrip('/')}/auth/v1", options={"require": ["sub", "exp", "aud", "iss"]})
 
 
 async def current_user(request: Request) -> User:
@@ -58,7 +60,8 @@ async def current_user(request: Request) -> User:
     token = header.split(" ", 1)[1].strip()
     try:
         claims = await asyncio.to_thread(_decode, token)
-    except (jwt.PyJWTError, jwt.PyJWKClientError) as e:
+        uuid.UUID(claims["sub"])
+    except (jwt.PyJWTError, jwt.PyJWKClientError, ValueError, TypeError) as e:
         raise ApiError(401, "unauthorized", f"Invalid session token: {e}") from e
     user_id = claims.get("sub")
     role = await get_store().get_role(user_id) if user_id else None

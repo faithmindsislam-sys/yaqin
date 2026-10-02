@@ -232,4 +232,21 @@ Auth: Supabase signs user JWTs with ES256. The API verifies them against
 issuer `{SUPABASE_URL}/auth/v1`. Secrets live outside the repo (`~/.config/yaqin/`).
 
 `web/.env.local`: `NEXT_PUBLIC_API_BASE` (empty = same origin `/api`),
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+
+## Completed workflows
+
+See `SUPABASE_SETUP.md`; apply the missing migrations in the documented order.
+
+- `GET /api/content`: live `{tracks, lessons, sources}`; published lessons only, no-store.
+- `GET /api/review/lessons`: own lessons for instructors, all for reviewers.
+- `POST /api/review/drafts`: validated lesson JSON; saves an unpublished draft with ownership checks.
+- `POST /api/review/{id}/submit`: author submits a saved draft after checks.
+- `GET /api/review/sources`: pending sources for staff.
+- `POST /api/review/sources/{id}/approve`: reviewer approval with an audit record.
+- Publishing requires an in-review lesson and every cited source approved.
+- Progress uses the `save_learning_progress` Supabase RPC with RLS and an atomic merge.
+  Notes/card completion are in `progress`; streak dates are in `learning_days`.
+  Daily minutes, onboarding and known lesson preferences are in `profiles`.
+- Browser content writes are revoked; staff changes go through the validated API.
+- Tutor retrieval and explain-back exclude unapproved sources in online and offline modes.

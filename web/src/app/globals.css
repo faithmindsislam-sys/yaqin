@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #0b2a4a;
-  --color-ink-soft: #3d5670;
-  --color-muted: #6b7f93;
+  --color-ink: #142f37;
+  --color-ink-soft: #4d6268;
+  --color-muted: #687b80;
   --color-teal-50: #ecf8f8;
   --color-teal-100: #d2efef;
   --color-teal-200: #a6dfe0;
@@ -13,12 +13,12 @@
   --color-teal-600: #0e7f83;
   --color-teal-700: #0d666a;
   --color-teal-800: #0f5255;
-  --color-sky-50: #f3f9fc;
-  --color-sky-100: #e6f2f8;
-  --color-sky-200: #cfe5f0;
+  --color-sky-50: #fafaf7;
+  --color-sky-100: #eff4f3;
+  --color-sky-200: #dfeae7;
   --color-gold: #f2b134;
   --color-rose: #d95c4a;
-  --color-line: #dbe7ee;
+  --color-line: #e2e8e4;
 
   --font-sans: var(--font-readex), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-dmserif), var(--font-readex), Georgia, serif;
@@ -63,7 +63,8 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 9999px;
+  border-radius: 0.8rem;
+  min-height: 44px;
   padding: 0.7rem 1.35rem;
   font-weight: 500;
   transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
@@ -81,8 +82,8 @@ textarea:focus-visible {
 }
 .btn-primary {
   color: white;
-  background: linear-gradient(180deg, var(--color-teal-500), var(--color-teal-700));
-  box-shadow: 0 8px 20px -10px rgb(13 102 106 / 0.7);
+  background: var(--color-teal-700);
+  box-shadow: none;
 }
 .btn-primary:hover {
   box-shadow: 0 10px 24px -10px rgb(13 102 106 / 0.85);
@@ -112,6 +113,7 @@ textarea:focus-visible {
   color: var(--color-ink-soft);
 }
 
+@layer components {
 .input {
   width: 100%;
   border-radius: 0.85rem;
@@ -122,6 +124,7 @@ textarea:focus-visible {
 }
 .input::placeholder {
   color: var(--color-muted);
+}
 }
 
 .eyebrow {
@@ -156,4 +159,86 @@ textarea:focus-visible {
 }
 .rise {
   animation: rise 360ms ease-out both;
+}
+
+/* Shared identity and a quiet, readable public experience. */
+.brand-logo { position: relative; display: block; width: 145px; height: 58px; overflow: hidden; flex-shrink: 0; }
+.brand-logo img { position: absolute; width: 222px; height: 74px; max-width: none; left: -38px; top: -8px; }
+.brand-logo-compact { width: 112px; height: 46px; }
+.brand-logo-compact img { width: 172px; height: 57px; left: -29px; top: -6px; }
+.brand-mark { position: relative; display: inline-block; overflow: hidden; flex-shrink: 0; }
+.brand-mark img { position: absolute; max-width: none; left: -69%; top: -15%; }
+.site-header { border-bottom: 1px solid var(--color-line); background: #fafaf7; }
+.site-header-inner { max-width: 1200px; min-height: 88px; margin: auto; padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.site-nav { display: flex; align-items: center; gap: 28px; font-size: 14px; color: var(--color-ink-soft); }
+.site-nav a:hover { color: var(--color-teal-700); }
+.mobile-menu { display: none; }
+.landing { background: #fafaf7; }
+.landing-container { max-width: 1200px; margin-inline: auto; padding-inline: 32px; }
+.landing-hero { display: grid; grid-template-columns: 1.12fr 1fr; align-items: center; gap: 76px; padding-block: 76px 64px; }
+.hero-title { font-size: clamp(40px, 4.4vw, 64px); line-height: 1.08; letter-spacing: -0.035em; margin-top: 22px; }
+[dir="rtl"] .hero-title { line-height: 1.45; letter-spacing: 0; }
+.hero-sub { max-width: 480px; font-size: 16px; line-height: 1.8; margin-top: 24px; color: var(--color-ink-soft); }
+.hero-note { display: flex; align-items: center; gap: 8px; color: var(--color-muted); font-size: 12px; margin-top: 20px; }
+.verse-panel { position: relative; background: #eaf2ee; padding: 30px; border-radius: 120px 120px 24px 24px; border: 1px solid #d9e6df; }
+.verse-panel:before { content: ""; position: absolute; inset: 12px; border: 1px solid #d4e1d9; border-radius: 110px 110px 16px 16px; pointer-events: none; }
+.verse-panel .verse-heading { text-align: center; padding-top: 25px; padding-bottom: 24px; }
+.verse-panel figure { position: relative; background: #fafcf9; border: 1px solid #dde8e0; padding: 24px; border-radius: 18px; }
+.verse-panel blockquote { font-size: 23px; line-height: 2; }
+.verse-panel figure > p { font-size: 13px; line-height: 1.7; }
+.verse-panel figcaption { line-height: 1.6; }
+.verse-panel figcaption a { overflow-wrap: anywhere; }
+.landing-proof { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px; padding-block: 22px; border-block: 1px solid var(--color-line); color: var(--color-ink-soft); font-size: 13px; }
+.landing-proof span { display: flex; align-items: center; gap: 8px; }
+.landing-section { padding-block: 64px; }
+.landing-section h2 { font-size: 36px; letter-spacing: -0.02em; line-height: 1.2; }
+.section-intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.section-intro p { max-width: 570px; margin-top: 12px; font-size: 14px; line-height: 1.8; color: var(--color-ink-soft); }
+.track-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.track-card { display: flex; flex-direction: column; padding: 28px; border: 1px solid var(--color-line); border-radius: 20px; background: white; transition: border-color 150ms, transform 150ms; }
+.track-card:hover { border-color: var(--color-teal-400); transform: translateY(-3px); }
+.track-card h3 { font-size: 25px; margin-top: 24px; }
+.track-card p { font-size: 14px; line-height: 1.8; color: var(--color-ink-soft); margin-top: 12px; }
+.track-card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 24px; margin-top: auto; font-size: 12px; color: var(--color-muted); }
+.trust-panel { background: #173d3d; color: white; border-radius: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; padding: 44px; margin-bottom: 64px; }
+.trust-panel .eyebrow { color: #a4d4c6; }
+.trust-panel h2 { font-size: 34px; line-height: 1.2; margin-top: 16px; }
+.trust-panel p, .trust-panel li { color: #d4e4df; font-size: 14px; line-height: 1.8; }
+.trust-panel li { display: flex; align-items: start; gap: 12px; }
+.trust-panel li svg { flex-shrink: 0; margin-top: 5px; color: #a4d4c6; }
+#tracks, #sources, #method { scroll-margin-top: 24px; }
+@media (max-width: 1050px) {
+  .site-nav { gap: 18px; }
+  .site-header .header-lang { display: none; }
+  .landing-hero { gap: 36px; }
+  .track-card { padding: 22px; }
+}
+@media (max-width: 767px) {
+  .site-header-inner { padding: 12px 20px; min-height: 76px; gap: 12px; }
+  .site-header .desktop-nav, .site-header .header-signin { display: none; }
+  .site-header .btn { padding: 10px 14px; font-size: 13px; white-space: nowrap; }
+  .mobile-menu { display: block; position: relative; }
+  .mobile-menu summary { list-style: none; cursor: pointer; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--color-line); border-radius: 12px; }
+  .mobile-menu summary::-webkit-details-marker { display: none; }
+  .mobile-menu[open] summary { background: var(--color-teal-50); }
+  .mobile-menu nav { position: absolute; top: 54px; inset-inline-end: 0; min-width: 230px; background: white; padding: 16px; display: flex; flex-direction: column; align-items: stretch; gap: 4px; border: 1px solid var(--color-line); border-radius: 16px; box-shadow: var(--shadow-lift); }
+  .mobile-menu nav a { padding: 10px; }
+  .landing-container { padding-inline: 20px; }
+  .landing-hero { grid-template-columns: 1fr; padding-block: 44px; gap: 36px; }
+  .hero-title { max-width: 560px; font-size: clamp(38px, 8vw, 54px); }
+  .hero-sub { font-size: 15px; }
+  .verse-panel { max-width: 520px; width: 100%; margin-inline: auto; padding: 24px; }
+  .landing-proof { gap: 16px 24px; justify-content: start; font-size: 12px; }
+  .landing-section { padding-block: 44px; }
+  .landing-section h2 { font-size: 30px; }
+  .section-intro { align-items: start; flex-direction: column; gap: 16px; }
+  .track-grid { grid-template-columns: 1fr; gap: 14px; }
+  .track-card h3 { margin-top: 18px; }
+  .trust-panel { grid-template-columns: 1fr; padding: 28px; gap: 28px; margin-bottom: 44px; }
+  .trust-panel h2 { font-size: 30px; }
+}
+@media (max-width: 380px) {
+  .site-header .brand-logo { width: 112px; height: 46px; }
+  .site-header .brand-logo img { width: 172px; height: 57px; left: -29px; top: -6px; }
+  .site-header-inner { padding-inline: 16px; gap: 8px; }
 }

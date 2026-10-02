@@ -42,3 +42,6 @@ next-env.d.ts
 
 # bundled from ../content at build time
 /src/generated/
+
+# Share the public configuration template.
+!.env.example

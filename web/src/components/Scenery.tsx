@@ -58,24 +58,6 @@ export function Skyline({ className = "", tone = "teal" }: { className?: string;
   );
 }
 
-export function ArchFrame({ className = "" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 300 420" aria-hidden="true">
-      <defs>
-        <linearGradient id="af-stone" x1="0" x2="1">
-          <stop offset="0" stopColor="#f6f1e7" />
-          <stop offset="1" stopColor="#e9e1d1" />
-        </linearGradient>
-      </defs>
-      <path d="M0 420 V140 C0 60 70 10 150 10 S300 60 300 140 V420 H262 V150 C262 90 212 48 150 48 S38 90 38 150 V420Z" fill="url(#af-stone)" />
-      <path d="M38 150 C38 90 88 48 150 48 S262 90 262 150" fill="none" stroke="#d8ccb6" strokeWidth="3" />
-      <g fill="none" stroke="#d8ccb6" strokeWidth="1.5" opacity=".9">
-        <path d="M60 420 V160 M240 420 V160" />
-      </g>
-    </svg>
-  );
-}
-
 /** Eight-point star tile used as a faint background pattern. */
 export function StarPattern({ className = "" }: { className?: string }) {
   return (

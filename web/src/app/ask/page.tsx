@@ -55,7 +55,9 @@ function AskAndCheck() {
   const onText = useCallback((s: string) => setQ(s), []);
   const dictation = useDictation(lang, onText);
 
-  useEffect(() => end.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [msgs, busy]);
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [msgs, busy]);
 
   async function send(question: string) {
     if (!question.trim() || busy) return;
@@ -111,20 +113,23 @@ function AskAndCheck() {
 
       <section className="card flex min-h-[70vh] min-w-0 flex-col">
         <header className="flex items-center gap-3 border-b border-line p-5">
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-b from-teal-400 to-teal-700 text-white">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-b from-teal-400 to-teal-700 text-white">
             <Bot className="h-5 w-5" />
           </span>
           <div>
             <h1 className="font-serif text-2xl text-ink">{t(S.ask.title)}</h1>
             <p className="text-sm text-ink-soft">{t(S.ask.sub)}</p>
           </div>
+          {msgs.length > 0 && <button className="ms-auto rounded-lg p-2 text-muted hover:bg-sky-50 xl:hidden" onClick={() => setMsgs([])} aria-label={t(S.ask.newChat)}><Plus className="h-5 w-5" /></button>}
         </header>
 
         <div className="flex-1 space-y-5 overflow-y-auto p-5">
           {msgs.length === 0 && (
-            <div className="grid gap-2 sm:grid-cols-3 xl:hidden">
+            <div className="mx-auto max-w-lg space-y-3 py-8">
+              <h2 className="font-serif text-2xl text-ink">{t({ en: "What would you like to understand?", ar: "ما الذي ترغب في فهمه؟" })}</h2>
+              <p className="pb-3 text-sm text-muted">{t({ en: "Start with a question, or choose one below.", ar: "ابدأ بسؤال، أو اختر سؤالًا أدناه." })}</p>
               {EXAMPLES[track].map((e) => (
-                <button key={e.en} onClick={() => send(t(e))} className="rounded-2xl border border-line p-3 text-start text-sm text-ink-soft hover:border-teal-300">
+                <button key={e.en} onClick={() => send(t(e))} className="block w-full rounded-xl border border-line p-4 text-start text-sm text-ink-soft hover:border-teal-300">
                   {t(e)}
                 </button>
               ))}

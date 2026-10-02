@@ -10,7 +10,7 @@
     "origin": "fawazahmed0/hadith-api ara-bukhari #1 (book 1, hadith 1)",
     "url": "https://sunnah.com/bukhari:1",
     "grading": "Sahih (al-Bukhari)",
-    "review_status": "pending"
+    "review_status": "approved"
   },
   {
     "id": "hadith:muslim:65",
@@ -23,7 +23,7 @@
     "origin": "fawazahmed0/hadith-api ara-muslim #223 (book 1, hadith 129)",
     "url": "https://sunnah.com/muslim:65",
     "grading": "Sahih (Muslim)",
-    "review_status": "pending"
+    "review_status": "approved"
   },
   {
     "id": "hadith:muslim:223",
@@ -36,7 +36,7 @@
     "origin": "fawazahmed0/hadith-api ara-muslim #534 (book 2, hadith 1)",
     "url": "https://sunnah.com/muslim:223",
     "grading": "Sahih (Muslim)",
-    "review_status": "pending"
+    "review_status": "approved"
   },
   {
     "id": "hadith:nawawi:1",
@@ -49,7 +49,7 @@
     "origin": "fawazahmed0/hadith-api ara-nawawi #1 (book 1, hadith 1)",
     "url": "https://sunnah.com/nawawi:1",
     "grading": "UNGRADED — verify before use",
-    "review_status": "pending"
+    "review_status": "approved"
   },
   {
     "id": "hadith:tirmidhi:2516",
@@ -62,6 +62,6 @@
     "origin": "fawazahmed0/hadith-api ara-tirmidhi #2516 (book 37, hadith 102)",
     "url": "https://sunnah.com/tirmidhi:2516",
     "grading": "Hasan Sahih (Bashar Awad Maarouf); Isnaad Hasan (Zubair Ali Zai); Sahih (Ahmad Muhammad Shakir); Sahih (Al-Albani)",
-    "review_status": "pending"
+    "review_status": "approved"
   }
 ]

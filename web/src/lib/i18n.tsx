@@ -24,7 +24,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   }, [lang]);
 
-  const setLang = useCallback((l: Lang) => writeStored(KEY, l), []);
+  const setLang = useCallback((l: Lang) => {
+    writeStored(KEY, l);
+    window.dispatchEvent(new Event("yaqin:language"));
+  }, []);
 
   const value = useMemo<I18n>(
     () => ({

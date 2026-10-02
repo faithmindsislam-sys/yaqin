@@ -58,7 +58,8 @@ def reviewer(monkeypatch):
     get_settings.cache_clear()
 
 
-def test_review_queue_and_decision(client, reviewer):
+def test_review_queue_and_decision(client, reviewer, fake_llm):
+    fake_llm()
     assert [l["id"] for l in client.get("/api/review/queue").json()] == ["draft-lesson"]
     r = client.post("/api/review/draft-lesson/decision", json={"decision": "approve", "note": "ok"})
     assert r.json() == {"lesson_id": "draft-lesson", "status": "published"}
