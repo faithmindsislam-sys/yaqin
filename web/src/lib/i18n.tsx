@@ -34,7 +34,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       lang,
       dir: lang === "ar" ? "rtl" : "ltr",
       setLang,
-      t: (b) => (b ? b[lang] || b.en : ""),
+      // A lesson written in one language is shown in that language to everyone.
+      t: (b) => (b ? b[lang] || b.en || b.ar || "" : ""),
     }),
     [lang, setLang],
   );

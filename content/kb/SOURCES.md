@@ -1,5 +1,41 @@
 # Knowledge-base platforms
 
+## Current hadith source policy — 3 October 2026
+
+HadeethEnc is now the application's primary canonical source of truth for hadith
+text, its published English translations and associated explanations. Persisted
+fields are `provider: hadeethenc`, `canonical_for: hadith`, `source_of_truth: true`,
+`priority: primary`. See [`source_registry.json`](source_registry.json) and the
+complete Arabic/English resource snapshot at
+[`resources/hadeethenc/`](../../../resources/hadeethenc/README.md). Its manifest
+and validation report define verified inventory coverage, paired/unpaired records
+and explicit missing translations; the table below describes the earlier curated
+survey, not complete provider inventory.
+
+Delivered against 945 category/language inventories and 1,253 list pages:
+3,574 Arabic full-detail records, 2,328 English records/pairs and 1,246 Arabic-only
+records, with zero acquisition failures, duplicate dataset IDs or category-count
+discrepancies. Exact raw bodies and all available provider fields are preserved.
+Offline rebuild and completed restart each made zero HTTP requests and produced
+identical datasets. Provider revision information is not supplied in this API
+snapshot and is explicitly null; no revision was invented.
+
+The official API documentation was rendered and real responses were checked.
+The API offers full detail batches through `/api/v1/hadeeths/multiple/`, verified
+against single-record responses and official pages in a bilingual pilot. Exact
+raw bytes, provenance, vocabulary, original references, introductions, provider
+grades, commentary and revision fields are retained. The official API terms
+permit use with unchanged content and source attribution; the homepage additionally
+specifies revision and transcript retention and freshness requirements. Absent
+API revisions are explicitly reported rather than invented.
+
+`content/tools/fetch_hadeethenc.py` now projects the saved corpus into the app's
+curated source registry without network requests or stripping published wording.
+Existing collection references stay secondary; Dorar and hadith quotations inside
+books cannot replace canonical HadeethEnc text. Quran sources remain independent.
+No translations, grades or embeddings are generated. Canonical status does not
+promote a source's scholarly review status.
+
 Survey of the platforms named in the challenge's updated scientific package
 (`kb.pdf`, «المرجعية والحزمة العلمية والبيانات — محدث», pages 8–15), probed
 2026-10-02. All requests were made with a curl-style User-Agent; none needed a key

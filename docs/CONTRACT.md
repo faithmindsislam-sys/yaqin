@@ -32,8 +32,8 @@ metadata cannot grant a staff role.
 For protected requests, the API verifies Supabase JWTs and reads the role from `profiles`.
 Staff sign up as normal learners, then a super admin promotes them at `/studio/users/`.
 No invitation emails are sent. Staff roles are assigned through trusted server/SQL access; browser clients
-cannot change roles or write content directly. Only the author can submit a draft;
-admins approve sources and publish after validation. Unknown roles cannot access staff
+cannot change roles or write content directly. Only the author or an admin can submit a draft;
+admins approve sources and publish after validation; a teacher never publishes alone. Unknown roles cannot access staff
 endpoints. Legacy `instructor`/`reviewer` profiles resolve to `teacher`/`admin` until
 migration `0004_account_roles.sql` is applied. `/studio/` is the shared staff entrance;
 `/instructor/` remains accessible for existing links. Subdomain routing is a hosting step.
@@ -156,18 +156,22 @@ resolves to its source id, so a commentary hit cites the hadith it explains.
   "id": "wudu-order",
   "track": "first-steps",         // explore | first-steps | deepen
   "module": "purification",
-  "level": "foundation",          // foundation | deeper
+  "level": 1,                     // 1 | 2 | 3 | 4 (old foundation/deeper drafts map to 1/2)
   "minutes": 4,
-  "title": { "en": "The order of wudu", "ar": "ترتيب أعضاء الوضوء" },
+  "title": { "en": "The order of wudu", "ar": "ترتيب أعضاء الوضوء" },   // one language may be "" (see below)
   "summary": { "en": "…", "ar": "…" },
-  "cover": "/img/lessons/wudu.webp",
-  "status": "published",          // draft | in_review | published
+  "cover": "/img/lessons/wudu.webp",          // optional; shown on the first card. Site path, https URL,
+                                               // or a png/jpeg/webp data URL picked in the Studio editor
+  "contributors": ["Amina", "Yusuf"],          // who worked on the lesson (max 20). Kept by the API: the email of each account that saves the lesson is added; a list sent by the editor is ignored. Staff-only: left out of `/api/content` and of `/api/lessons/{id}` for learners
+  "tags": ["wudu", "purification"],            // optional free keywords set in Studio (max 12, 40 characters each)
+  "status": "published",          // draft | in_review | published | archived
   "cards": [
     {
       "id": "c1",
       "kind": "concept",          // concept | quote | practice | check
       "title":    { "en": "…", "ar": "…" },
-      "body":     { "en": "…", "ar": "…" },   // AI-drafted, reviewer-approved prose
+      "body":     { "en": "…", "ar": "…" },   // plain prose: search, narration and review checks read this
+      "html":     { "en": "<p>…</p>", "ar": "" }, // optional formatted body from the Studio editor
       "takeaway": { "en": "…", "ar": "…" },
       "image": "/img/cards/wudu-1.webp",       // optional, reviewed illustration
       "visual": "steps",                       // optional built-in SVG visual key
@@ -198,6 +202,20 @@ resolves to its source id, so a commentary hit cites the hadith it explains.
 `card.kind = "quote"` renders `sources[0]` as the card body (verbatim text), so
 quote cards never carry their own `body` text for scripture.
 
+**Languages.** Every `{en, ar}` text needs at least one language. A lesson can be written
+in English, Arabic, or both; learner pages show the language that exists.
+
+**Formatted text.** `card.html` is written in the Studio editor (`/studio/lesson/`). On save the
+API keeps only an allowlist of formatting tags (`api/app/richtext.py`: paragraphs, headings,
+lists, highlight box, bold/italic/underline, and `<font>` colour, face and size; no styles,
+links, images or scripts) and rebuilds `card.body` from it. Clients never send their own
+`body` for a card that has `html`. Every card still cites at least one source.
+
+**Lesson editor.** `/studio/lesson/` creates a lesson (write it, or start from an AI prompt)
+and `/studio/lesson/?id=…` edits one. Both paths save through `POST /api/review/drafts`.
+AI drafting has no endpoint yet: `generateLesson()` in `web/src/lib/api.ts` returns nothing,
+so the editor opens empty.
+
 ### Track (`content/tracks.json`)
 
 ```jsonc
@@ -219,9 +237,38 @@ All bodies are JSON. `lang` is `"en" | "ar"`. Auth header optional unless noted.
 | POST | `/api/tutor/explain-back` | Grade a learner's explanation (below) |
 | POST | `/api/review/check` | Pre-review of a lesson draft (teacher or higher): `{ready_for_reviewer, checks, issues: [{card, severity, issue, suggestion, origin: "rule"\|"ai"}]}` |
 | GET  | `/api/review/queue` | Own lessons in review for teachers; all for admins |
-| POST | `/api/review/{lesson_id}/decision` | `{decision: "approve"|"request_changes", note}` (admin or super admin) |
+| POST | `/api/review/{lesson_id}/decision` | `{decision: "approve"|"request_changes", note}` (admin or super admin only) |
+| POST | `/api/review/sources/quran` | Teacher or above; `{surah, ayah}` → the source library entry `quran:<surah>:<ayah>`. A verse that is not in the library yet is added as `pending`, word for word from `content/quran/ayat.json` (built by `content/tools/bundle_quran.py` from the reader's Arabic and Sahih International files). An existing entry is returned unchanged. Unknown verse: 404. |
 | GET | `/api/admin/users?q=` | Super admin only; case-insensitive email/display-name substring search, newest first, max 50; returns `[{id, email, display_name, role, created_at}]`. Empty `q` lists the newest users. |
 | POST | `/api/admin/users/{id}/role` | Super admin only; `{role: "learner"|"teacher"|"admin"|"super_admin"}` → `{id, role}`. Self-change: 403; invalid role/id: 400; missing profile: 404. Requires a real session; updates role and audit atomically. |
+
+### Studio lesson management
+
+Review is always on; there is no setting to turn it off. The author submits;
+admins/super admins publish, and every cited source must be approved. Automatic
+`review.check` checks run on submission and approval, block high-severity issues,
+and at least one known source is required. Only admins manage Coming soon titles.
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/api/review/{id}/unpublish` | Author or admin/super admin; published → draft, preserving curriculum position. Deletes lesson retrieval chunks and records a review event. |
+| POST | `/api/review/{id}/delete` | Author or admin/super admin; draft only. Returns 409 if any progress exists: keep it hidden instead. Removes all curriculum references and lesson chunks; records `admin_events.kind=lesson_deleted`, payload `{id, title}`. |
+| POST | `/api/review/planned` | `{track, module, title: {en, ar}}`; append a Coming soon title to the existing module `planned` list. |
+| POST | `/api/review/planned/remove` | `{track, module, index}`; remove a Coming soon title by zero-based index. |
+
+Planned-title writes require admin/super admin, or a teacher when review is not
+required. Track/module must exist; English and Arabic titles are nonblank and
+at most 200 characters. Both operations audit the track, module, title and index
+in `admin_events`. Other staff can read the titles. No new tables or statuses.
+The Studio shows status totals, lists published lessons first, and offers
+title search and track/level/status filters. The footer provides filter reset
+and 6/12/24 lessons per page; the list count reports the visible range of matches.
+New lesson metadata and JSON editing open in a modal; Publish/Submit, Hide, Edit
+and Delete remain available. Archive, Hide and Delete use centered confirmation
+modals, with success/error toasts after actions. Review notes, manual AI pre-check and Coming soon
+management are hidden in this UI. Automatic checks still run when publishing;
+the planned-title API remains available.
+The Sources page and API remain available, but the Studio nav has no Sources link.
 
 ### `POST /api/tutor/ask`
 
@@ -313,10 +360,10 @@ See `SUPABASE_SETUP.md`; apply the missing migrations in the documented order.
 - `GET /api/content`: live `{tracks, lessons, sources}`; published lessons only, no-store.
 - `GET /api/review/lessons`: own lessons for teachers, all for admins and super admins.
 - `POST /api/review/drafts`: validated lesson JSON; saves an unpublished draft with ownership checks.
-- `POST /api/review/{id}/submit`: author submits a saved draft after checks.
+- `POST /api/review/{id}/submit`: the author, or an admin, submits a saved draft after checks.
 - `GET /api/review/sources`: pending sources for staff.
 - `POST /api/review/sources/{id}/approve`: admin or super-admin approval with an audit record.
-- Publishing requires an in-review lesson and every cited source approved.
+- Publishing requires an in-review lesson, an admin, and approved sources, as documented above.
 - Progress uses the `save_learning_progress` Supabase RPC with RLS and an atomic merge.
   Notes/card completion are in `progress`; streak dates are in `learning_days`.
   Daily minutes, onboarding and known lesson preferences are in `profiles`.

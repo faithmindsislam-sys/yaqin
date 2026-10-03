@@ -23,7 +23,11 @@
         "lessons": [
           "who-is-god",
           "kaaba-qibla",
-          "spread-by-sword"
+          "spread-by-sword",
+          "wudu-order",
+          "what-breaks-wudu",
+          "al-fatiha-meaning",
+          "why-face-qibla"
         ]
       },
       {
@@ -109,10 +113,7 @@
           "en": "Purification",
           "ar": "الطهارة"
         },
-        "lessons": [
-          "wudu-order",
-          "what-breaks-wudu"
-        ]
+        "lessons": []
       },
       {
         "id": "prayer",
@@ -197,10 +198,7 @@
           "en": "Understand what you recite",
           "ar": "افهم ما تتلوه"
         },
-        "lessons": [
-          "al-fatiha-meaning",
-          "why-face-qibla"
-        ]
+        "lessons": []
       },
       {
         "id": "understanding-hadith",

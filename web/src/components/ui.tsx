@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Compass, Languages, Sprout } from "lucide-react";
+import { BookMarked, BookOpen, Compass, Languages, ScrollText, Sprout } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { S } from "@/lib/strings";
 import { useContent } from "@/lib/content";
-import type { Source, TrackId } from "@/lib/types";
+import type { Card, Source, TrackId } from "@/lib/types";
 
 export const TRACK_META: Record<TrackId, { icon: typeof Compass; tint: string; ring: string; tags: { en: string; ar: string }[] }> = {
   explore: {
@@ -59,6 +59,8 @@ export function LangToggle({ className = "" }: { className?: string }) {
   );
 }
 
+const SOURCE_ICONS: Partial<Record<Source["kind"], typeof BookOpen>> = { quran: BookOpen, hadith: ScrollText };
+
 /** Revealed text, always rendered verbatim from the sources table. */
 export function SourceQuote({ id, source, compact = false }: { id: string; source?: Source; compact?: boolean }) {
   const { sources: allSources } = useContent();
@@ -66,8 +68,14 @@ export function SourceQuote({ id, source, compact = false }: { id: string; sourc
   const s = source ?? allSources[id];
   if (!s) return null;
   const isScripture = s.kind === "quran" || s.kind === "hadith";
+  const Icon = SOURCE_ICONS[s.kind] ?? BookMarked;
   return (
-    <figure className={`rounded-2xl border-s-4 border-brand-300 bg-brand-50/60 ${compact ? "p-3" : "p-4 sm:p-5"}`}>
+    <figure className={`source-quote ${compact ? "is-compact" : ""}`}>
+      <div className="source-quote-head">
+        <span className="source-quote-icon"><Icon className="h-4 w-4" aria-hidden /></span>
+        <span className="source-quote-ref">{lang === "ar" ? s.ref_ar : s.ref_en}</span>
+        {isScripture && <span className="chip !py-0 !text-[0.7rem]">{t(S.lesson.revealed)}</span>}
+      </div>
       {s.text_ar && (
         <blockquote
           className={`${s.kind === "quran" ? "quran" : "font-sans"} text-ink ${compact ? "text-lg" : "text-xl sm:text-2xl"}`}
@@ -82,19 +90,28 @@ export function SourceQuote({ id, source, compact = false }: { id: string; sourc
           “{s.text_en}”
         </p>
       )}
-      <figcaption className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
-        <span className="font-medium text-brand-700">{lang === "ar" ? s.ref_ar : s.ref_en}</span>
-        {s.grading && <span>· {s.grading}</span>}
-        {isScripture && <span className="chip !py-0 !text-[0.7rem]">{t(S.lesson.revealed)}</span>}
-        {s.review_status === "pending" && <span className="text-[0.7rem] opacity-80">· {t(S.lesson.pendingReview)}</span>}
-        {s.url && (
-          <a href={s.url} target="_blank" rel="noreferrer" className="underline decoration-dotted underline-offset-2 hover:text-brand-700">
-            {s.origin ?? "link"}
-          </a>
-        )}
-      </figcaption>
+      {(s.grading || s.review_status === "pending" || s.url) && (
+        <figcaption className="mt-3 flex flex-wrap items-center gap-2 border-t border-brand-100 pt-2.5 text-xs text-muted">
+          {s.grading && <span>{s.grading}</span>}
+          {s.review_status === "pending" && <span className="text-[0.7rem] opacity-80">{s.grading && "· "}{t(S.lesson.pendingReview)}</span>}
+          {s.url && (
+            <a href={s.url} target="_blank" rel="noreferrer" className="ms-auto underline decoration-dotted underline-offset-2 hover:text-brand-700">
+              {s.origin ?? "link"}
+            </a>
+          )}
+        </figcaption>
+      )}
     </figure>
   );
+}
+
+/** A section's text: formatted when it was written in the Studio editor, plain otherwise. */
+export function CardBody({ card, className = "" }: { card: Card; className?: string }) {
+  const { t } = useI18n();
+  // The API cleans this HTML when the lesson is saved (api/app/richtext.py).
+  return card.html
+    ? <div className={`rich ${className}`} dangerouslySetInnerHTML={{ __html: t(card.html) }} />
+    : <p className={`whitespace-pre-line ${className}`}>{t(card.body)}</p>;
 }
 
 export function Section({ title, sub, action, children, className = "" }: {

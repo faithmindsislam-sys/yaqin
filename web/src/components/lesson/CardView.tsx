@@ -8,7 +8,7 @@ import { S } from "@/lib/strings";
 import type { Card, Lesson } from "@/lib/types";
 import { useNarration } from "@/lib/voice";
 import { CardVisual } from "../Visuals";
-import { SourceQuote } from "../ui";
+import { CardBody, SourceQuote } from "../ui";
 
 const LABELS = {
   obligatory: { key: S.lesson.obligatory, cls: "bg-brand-50 text-brand-800 border-brand-200" },
@@ -25,6 +25,8 @@ export function CardView({ lesson, card, onAsk }: { lesson: Lesson; card: Card; 
 
   const isQuote = card.kind === "quote";
   const primary = card.sources?.[0];
+  // The lesson cover opens the lesson, unless the first section has its own image.
+  const image = card.image ?? (lesson.cards[0]?.id === card.id ? lesson.cover : undefined);
   const labels = lesson.explain_back?.key_ideas.map((k) => k[lang]) ?? [];
   // Narrate explanation only — never the verse or hadith itself.
   const narrationText = [t(card.title), isQuote ? "" : t(card.body), t(card.takeaway)].filter(Boolean).join(". ");
@@ -44,16 +46,16 @@ export function CardView({ lesson, card, onAsk }: { lesson: Lesson; card: Card; 
         </div>
       ) : (
         <div className="mt-5 aspect-[16/9] w-full">
-          {card.image && imageOk ? (
+          {image && imageOk ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={card.image} alt="" onError={() => setImageOk(false)} className="h-full w-full rounded-[1.4rem] object-cover" />
+            <img src={image} alt="" onError={() => setImageOk(false)} className="h-full w-full rounded-[1.4rem] object-cover" />
           ) : (
             <CardVisual kind={card.visual} labels={labels} />
           )}
         </div>
       )}
 
-      {!isQuote && card.body && <p className="mt-5 text-[1.05rem] leading-relaxed text-ink">{t(card.body)}</p>}
+      {!isQuote && card.body && <CardBody card={card} className="mt-5 text-[1.05rem] leading-relaxed text-ink" />}
       {card.takeaway && <p className="mt-4 font-serif text-xl italic leading-snug text-ink-soft">{t(card.takeaway)}</p>}
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs">

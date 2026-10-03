@@ -18,6 +18,7 @@ vm.runInNewContext(compiled, { module: component, exports: component.exports, re
   if (name === "react") return { useEffect: (effect) => effect() };
   if (name === "next/navigation") return { useRouter: () => router };
   if (name === "@/lib/session") return { useSession: () => session };
+  if (name === "@/lib/onboarding-state") return { useOnboarding: () => ({ setScreen: (screen) => actions.push(["screen", screen]) }) };
   if (name === "@/lib/i18n") return { useI18n: () => ({ t: (value) => value.en }) };
   if (name === "./ui") return { LangToggle: () => null, TRACK_META: Object.fromEntries(
     ["explore", "first-steps", "deepen"].map((id) => [id, { icon: () => null }])) };
@@ -40,7 +41,7 @@ for (const signedIn of [false, true]) {
   for (const [index, track] of ["explore", "first-steps", "deepen"].entries()) {
     actions.length = 0;
     cards[index].props.onClick();
-    assert.deepEqual(actions, track === "explore" ? [["push", "/start/explore/"]] : [...(signedIn ? [] : [["guest"]]),
+    assert.deepEqual(actions, track === "explore" ? [["screen", 0], ["push", "/start/explore/"]] : [...(signedIn ? [] : [["guest"]]),
       ["prefs", { track, onboarded: true }], ["push", "/app/learn/"]]);
   }
 }

@@ -24,7 +24,6 @@ const NAV = [
 
 const STUDIO_NAV = [
   { href: "/studio/", icon: ClipboardCheck, label: S.instructor.lessons, superAdmin: false },
-  { href: "/studio/sources/", icon: LibraryBig, label: S.instructor.sources, superAdmin: false },
   { href: "/studio/users/", icon: Users, label: S.users.title, superAdmin: true },
   { href: "/app/learn/", icon: ArrowLeft, label: S.instructor.backToApp, short: S.instructor.backToApp, superAdmin: false },
 ];
@@ -47,7 +46,7 @@ export function AppShell({ children, requireSession = true }: { children: React.
   const studio = pathname.startsWith("/studio");
   const items = studio ? STUDIO_NAV.filter((n) => !n.superAdmin || role === "super_admin") : NAV.filter((n) => !n.staff || isStaff(role));
   const isActive = (href: string) => href === "/app/" ? pathname === href
-    : href === "/studio/" ? pathname === "/studio/" || pathname === "/studio"
+    : href === "/studio/" ? /^\/studio(\/lesson)?\/?$/.test(pathname)
     : pathname.startsWith(href.replace(/\/$/, ""));
   const name = displayName(user);
 

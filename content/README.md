@@ -16,6 +16,16 @@ content/
 
 ## Provenance
 
+HadeethEnc is our primary canonical source of truth for hadith text, its published
+English translations and associated explanations. This is registered in
+[`kb/source_registry.json`](kb/source_registry.json), the HadeethEnc source records
+and [`resources/hadeethenc/manifest.json`](../../resources/hadeethenc/manifest.json)
+using `provider: hadeethenc`, `canonical_for: hadith`, `source_of_truth: true`,
+`priority: primary`. Full ar/en acquisition, exact raw bytes, explicit untranslated
+records and coverage evidence live in [`resources/hadeethenc/`](../../resources/hadeethenc/README.md).
+Dorar and book quotations are secondary references; Quran provenance remains
+independent. Existing collection references and provider grades are preserved.
+
 **Nothing in `sources/` is typed by hand.** Every item is downloaded by a script
 in `tools/` and written unchanged. Re-running the scripts reproduces the files
 (responses are cached in `kb/cache/`, which is not committed).
@@ -54,7 +64,8 @@ HadeethEnc's own id (`hadith:henc:3313`); the Bukhari/Muslim numbers named in
 HadeethEnc's reference list are stored in `collection_refs`, and `see_also`
 links entries that are the same hadith. Each of the original nine hadith was
 read in full before it was cited in a lesson. HadeethEnc grades are recorded
-verbatim; every ingested item is graded sahih or hasan.
+verbatim; no grade is inferred or independently upgraded. Canonical designation
+does not mean that every record has received project scholarly review.
 
 ### What is AI-drafted
 

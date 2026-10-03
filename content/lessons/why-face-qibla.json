@@ -1,8 +1,8 @@
 {
   "id": "why-face-qibla",
-  "track": "deepen",
-  "module": "understand-what-you-recite",
-  "level": "deeper",
+  "track": "explore",
+  "module": "common-questions",
+  "level": 1,
   "minutes": 4,
   "title": {
     "en": "Why we face the qibla",

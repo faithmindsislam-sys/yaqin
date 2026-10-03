@@ -1,6 +1,7 @@
 // Mirrors docs/CONTRACT.md.
 
 export type Lang = "en" | "ar";
+/** One side may be empty: a lesson can be written in English, Arabic, or both. */
 export type Bi = { en: string; ar: string };
 
 export type TrackId = "explore" | "first-steps" | "deepen";
@@ -29,6 +30,8 @@ export interface Card {
   kind: CardKind;
   title: Bi;
   body?: Bi;
+  /** Formatted body from the Studio editor, cleaned by the API. `body` is its plain text. */
+  html?: Bi;
   takeaway?: Bi;
   image?: string;
   visual?: string;
@@ -57,15 +60,24 @@ export interface Lesson {
   id: string;
   track: TrackId;
   module: string;
-  level: "foundation" | "deeper";
+  level: 1 | 2 | 3 | 4 | "foundation" | "deeper";
   minutes: number;
   title: Bi;
   summary: Bi;
   cover?: string;
-  status: "draft" | "in_review" | "published";
+  /** Names credited for the lesson. */
+  contributors?: string[];
+  /** Free keywords set in Studio. */
+  tags?: string[];
+  status: "draft" | "in_review" | "published" | "archived";
   cards: Card[];
   explain_back?: { prompt: Bi; key_ideas: KeyIdea[] };
   quiz?: QuizItem[];
+}
+
+/** Old cached drafts remain readable; new drafts use numbered levels. */
+export function lessonLevel(level: Lesson["level"]): 1 | 2 | 3 | 4 {
+  return level === "foundation" ? 1 : level === "deeper" ? 2 : level;
 }
 
 export interface Module {

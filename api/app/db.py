@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import time
 import uuid
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -33,13 +34,21 @@ class Store(Protocol):
     async def add_review_event(self, lesson_id: str, actor_id: str | None, kind: str, payload: dict) -> None: ...
     async def log_tutor(self, tier: str, citation_ids: list[str], latency_ms: int, track: str | None) -> None: ...
     async def get_role(self, user_id: str) -> str | None: ...
+    async def get_account(self, user_id: str) -> dict | None: ...
     async def search_users(self, query: str) -> list[dict]: ...
     async def set_user_role(self, user_id: str, role: str, actor_id: str) -> None: ...
     async def content_bundle(self) -> dict: ...
     async def staff_lessons(self, user_id: str | None, reviewer: bool) -> list[dict]: ...
     async def save_draft(self, draft: dict, actor_id: str | None, reviewer: bool) -> None: ...
-    async def transition_lesson(self, lesson_id: str, actor_id: str | None, kind: str, note: str = "") -> str: ...
+    async def lesson_history(self, lesson_id: str) -> list[dict]: ...
+    async def archive_lesson(self, lesson_id: str, actor_id: str | None, reviewer: bool) -> None: ...
+    async def transition_lesson(self, lesson_id: str, actor_id: str | None, kind: str, note: str = "", *,
+                                reviewer: bool = False, expected: dict | None = None) -> str: ...
+    async def unpublish_lesson(self, lesson_id: str, actor_id: str | None, reviewer: bool) -> None: ...
+    async def delete_lesson(self, lesson_id: str, actor_id: str | None, reviewer: bool) -> None: ...
+    async def change_planned(self, track: str, module: str, actor_id: str | None, *, title: dict | None = None, index: int | None = None) -> None: ...
     async def pending_sources(self) -> list[dict]: ...
+    async def add_source(self, source: dict) -> dict: ...
     async def approve_source(self, source_id: str, actor_id: str | None) -> None: ...
     async def ping(self) -> bool: ...
 
@@ -132,12 +141,45 @@ def tracks_with_lessons(tracks: list[dict], lessons: dict[str, dict]) -> list[di
     return out
 
 
-def ensure_approved(lesson: dict, sources: dict) -> None:
+def ensure_approved(lesson: dict, sources: dict, approved: bool = True) -> None:
     from .errors import ApiError
     from .retrieval import lesson_source_ids
     ids = lesson_source_ids(lesson)
-    if not ids or any(sid not in sources or sources[sid].get("review_status") != "approved" for sid in ids):
+    if not ids or any(sid not in sources for sid in ids):
+        raise ApiError(409, "unknown_sources", "A lesson must cite at least one known source.")
+    if approved and any(sources[sid].get("review_status") != "approved" for sid in ids):
         raise ApiError(409, "unapproved_sources", "Approve every cited source before publishing this lesson.")
+
+
+def curriculum_module(tracks: list[dict], track_id: str, module_id: str) -> dict:
+    from .errors import ApiError
+    module = next((m for t in tracks if t["id"] == track_id for m in t["modules"] if m["id"] == module_id), None)
+    if module is None:
+        raise ApiError(400, "bad_request", "Choose an existing track and module.")
+    return module
+
+
+def check_owner(lesson: dict, actor_id: str | None, reviewer: bool) -> None:
+    from .errors import ApiError
+    if not reviewer and (not actor_id or lesson.get("author_id") != actor_id):
+        raise ApiError(403, "forbidden", "Only the author or an admin can manage this lesson.")
+
+
+def edit_planned(tracks: list[dict], track: str, module: str, title: dict | None, index: int | None) -> tuple[str, dict]:
+    from .errors import ApiError
+    target = curriculum_module(tracks, track, module)
+    planned = target.get("planned", [])
+    if title is not None:
+        index = len(planned)
+        planned.append(title)
+        kind = "planned_title_added"
+    else:
+        if index is None or index < 0 or index >= len(planned):
+            raise ApiError(404, "not_found", "Coming soon title not found. Refresh the list.")
+        title = planned.pop(index)
+        kind = "planned_title_removed"
+    target["planned"] = planned
+    return kind, {"track": track, "module": module, "index": index, "title": title}
 
 
 class MemoryStore:
@@ -151,6 +193,7 @@ class MemoryStore:
         self.roles: dict[str, str] = {}
         self.users: dict[str, dict] = {}
         self.admin_events: list[dict] = []
+        self.progress: dict[tuple[str, str], dict] = {}
 
     def reload(self) -> None:
         self.tracks, self.lessons, self.sources = load_content(self.content_dir)
@@ -201,6 +244,10 @@ class MemoryStore:
     async def get_role(self, user_id: str) -> str | None:
         return self.users[user_id]["role"] if user_id in self.users else self.roles.get(user_id, "learner")
 
+    async def get_account(self, user_id: str) -> dict | None:
+        user = self.users.get(user_id)
+        return user and {"email": user.get("email"), "display_name": user.get("display_name")}
+
     async def search_users(self, query: str) -> list[dict]:
         rows = [u for u in self.users.values() if query.lower() in (u.get("email") or "").lower()
                 or query.lower() in (u.get("display_name") or "").lower()]
@@ -232,21 +279,46 @@ class MemoryStore:
         if old and (old.get("status") == "published" or (not reviewer and old.get("author_id") != actor_id)):
             raise ApiError(403, "forbidden", "Only your unpublished drafts can be edited.")
         self.lessons[draft["id"]] = {**draft, "status": "draft", "author_id": old.get("author_id") if old else actor_id}
+        await self.add_review_event(draft["id"], actor_id, "updated" if old else "created", {})
 
-    async def transition_lesson(self, lesson_id: str, actor_id: str | None, kind: str, note: str = "") -> str:
+    async def lesson_history(self, lesson_id: str) -> list[dict]:
+        return [{"id": e["id"], "kind": e["kind"], "payload": e["payload"], "actor_id": e["actor_id"],
+                 "actor_name": self.users.get(e["actor_id"], {}).get("display_name"),
+                 "actor_email": self.users.get(e["actor_id"], {}).get("email"),
+                 "created_at": datetime.fromtimestamp(e["created_at"], timezone.utc).isoformat()}
+                for e in reversed(self.events) if e["lesson_id"] == lesson_id]
+
+    async def archive_lesson(self, lesson_id: str, actor_id: str | None, reviewer: bool) -> None:
         from .errors import ApiError
         lesson = self.lessons.get(lesson_id)
         if not lesson:
             raise ApiError(404, "not_found", "Lesson not found.")
-        if kind == "submit" and (lesson.get("author_id") != actor_id or lesson["status"] != "draft"):
-            raise ApiError(403, "forbidden", "Only the author can submit a draft.")
+        check_owner(lesson, actor_id, reviewer)
+        if lesson["status"] == "archived":
+            raise ApiError(409, "conflict", "This lesson is already archived.")
+        await self.set_lesson_status(lesson_id, "archived")
+        await self.add_review_event(lesson_id, actor_id, "archived", {})
+        self.reload_index()
+
+    async def transition_lesson(self, lesson_id: str, actor_id: str | None, kind: str, note: str = "", *,
+                                reviewer: bool = False, expected: dict | None = None) -> str:
+        from .errors import ApiError
+        lesson = self.lessons.get(lesson_id)
+        if not lesson:
+            raise ApiError(404, "not_found", "Lesson not found.")
+        if expected is not None and lesson != expected:
+            raise ApiError(409, "conflict", "The lesson changed during checks. Try again.")
+        if kind != "submit" and not reviewer:
+            raise ApiError(403, "forbidden", "An admin must review this lesson.")
+        if kind == "submit" and ((not reviewer and lesson.get("author_id") != actor_id) or lesson["status"] != "draft"):
+            raise ApiError(403, "forbidden", "Only the author or an admin can submit a draft.")
         if kind != "submit" and lesson["status"] != "in_review":
             raise ApiError(409, "conflict", "The lesson must be in review first.")
         if kind == "approve":
             ensure_approved(lesson, self.sources)
         status = {"submit": "in_review", "approve": "published", "request_changes": "draft"}[kind]
         await self.set_lesson_status(lesson_id, status)
-        await self.add_review_event(lesson_id, actor_id, kind, {"note": note})
+        await self.add_review_event(lesson_id, actor_id, kind, {"note": note, "reviewed": reviewer} if kind == "approve" else {"note": note})
         if kind == "approve":
             for track in self.tracks:
                 if track["id"] == lesson["track"]:
@@ -269,8 +341,45 @@ class MemoryStore:
                         self.doc_sources[doc_id] = known
         self.index = BM25(docs)
 
+    async def unpublish_lesson(self, lesson_id: str, actor_id: str | None, reviewer: bool) -> None:
+        from .errors import ApiError
+        lesson = self.lessons.get(lesson_id)
+        if not lesson:
+            raise ApiError(404, "not_found", "Lesson not found.")
+        check_owner(lesson, actor_id, reviewer)
+        if lesson["status"] != "published":
+            raise ApiError(409, "conflict", "Only published lessons can be hidden.")
+        await self.set_lesson_status(lesson_id, "draft")
+        await self.add_review_event(lesson_id, actor_id, "unpublish", {})
+        self.reload_index()
+
+    async def delete_lesson(self, lesson_id: str, actor_id: str | None, reviewer: bool) -> None:
+        from .errors import ApiError
+        lesson = self.lessons.get(lesson_id)
+        if not lesson:
+            raise ApiError(404, "not_found", "Lesson not found.")
+        check_owner(lesson, actor_id, reviewer)
+        if lesson["status"] != "draft":
+            raise ApiError(409, "conflict", "Only draft lessons can be deleted. Hide it first.")
+        if any(key[1] == lesson_id for key in self.progress):
+            raise ApiError(409, "has_progress", "Learners have progress on this lesson. Keep it hidden instead of deleting it.")
+        for track in self.tracks:
+            for module in track["modules"]:
+                module["lessons"] = [i for i in module["lessons"] if i != lesson_id]
+        del self.lessons[lesson_id]
+        self.events = [e for e in self.events if e["lesson_id"] != lesson_id]
+        self.admin_events.append({"actor_id": actor_id, "kind": "lesson_deleted", "payload": {"id": lesson_id, "title": lesson["title"]}})
+        self.reload_index()
+
+    async def change_planned(self, track: str, module: str, actor_id: str | None, *, title: dict | None = None, index: int | None = None) -> None:
+        kind, payload = edit_planned(self.tracks, track, module, title, index)
+        self.admin_events.append({"actor_id": actor_id, "kind": kind, "payload": payload})
+
     async def pending_sources(self) -> list[dict]:
         return [s for s in self.sources.values() if s.get("review_status") == "pending"]
+
+    async def add_source(self, source: dict) -> dict:
+        return self.sources.setdefault(source["id"], source)
 
     async def approve_source(self, source_id: str, actor_id: str | None) -> None:
         from .errors import ApiError
@@ -385,6 +494,12 @@ class PgStore:
         async with self.pool.acquire() as c:
             return await c.fetchval("select role from profiles where id = $1", uuid.UUID(user_id))
 
+    async def get_account(self, user_id: str) -> dict | None:
+        async with self.pool.acquire() as c:
+            row = await c.fetchrow("select u.email, p.display_name from public.profiles p join auth.users u on u.id = p.id where p.id = $1",
+                                   uuid.UUID(user_id))
+        return dict(row) if row else None
+
     async def search_users(self, query: str) -> list[dict]:
         async with self.pool.acquire() as c:
             rows = await c.fetch(
@@ -434,20 +549,51 @@ class PgStore:
                     "insert into lessons (id, track, module, status, data, author_id) values ($1, $2, $3, 'draft', $4, $5::uuid) "
                     "on conflict (id) do update set track = excluded.track, module = excluded.module, "
                     "status = 'draft', data = excluded.data, updated_at = now() "
-                    "where lessons.status <> 'published' and ($6::boolean or lessons.author_id = $5::uuid) returning id",
+                    "where lessons.status <> 'published' and ($6::boolean or lessons.author_id = $5::uuid) returning id, (xmax = 0) as created",
                     draft["id"], draft["track"], draft["module"], {**draft, "status": "draft"}, uuid.UUID(actor_id), reviewer)
                 if not row:
                     raise ApiError(403, "forbidden", "Only your unpublished drafts can be edited.")
+                await c.execute("insert into review_events (lesson_id, actor_id, kind, payload) values ($1, $2, $3, '{}'::jsonb)",
+                                draft["id"], uuid.UUID(actor_id), "created" if row["created"] else "updated")
 
-    async def transition_lesson(self, lesson_id: str, actor_id: str | None, kind: str, note: str = "") -> str:
+    async def lesson_history(self, lesson_id: str) -> list[dict]:
+        async with self.pool.acquire() as c:
+            rows = await c.fetch(
+                "select e.id, e.kind, e.payload, e.actor_id, p.display_name as actor_name, u.email as actor_email, e.created_at "
+                "from review_events e left join profiles p on p.id = e.actor_id left join auth.users u on u.id = e.actor_id "
+                "where e.lesson_id = $1 order by e.created_at desc, e.id desc", lesson_id)
+        return [{**dict(r), "id": str(r["id"]), "actor_id": str(r["actor_id"]) if r["actor_id"] else None} for r in rows]
+
+    async def archive_lesson(self, lesson_id: str, actor_id: str | None, reviewer: bool) -> None:
+        from .errors import ApiError
+        async with self.pool.acquire() as c:
+            async with c.transaction():
+                row = await c.fetchrow("select status, author_id from lessons where id = $1 for update", lesson_id)
+                if not row:
+                    raise ApiError(404, "not_found", "Lesson not found.")
+                check_owner({"author_id": str(row["author_id"]) if row["author_id"] else None}, actor_id, reviewer)
+                if row["status"] == "archived":
+                    raise ApiError(409, "conflict", "This lesson is already archived.")
+                await c.execute("update lessons set status = 'archived', data = jsonb_set(data, '{status}', '\"archived\"'::jsonb), updated_at = now() where id = $1", lesson_id)
+                await c.execute("delete from source_chunks where lesson_id = $1", lesson_id)
+                await c.execute("insert into review_events (lesson_id, actor_id, kind, payload) values ($1, $2, 'archived', '{}'::jsonb)",
+                                lesson_id, uuid.UUID(actor_id) if actor_id else None)
+
+    async def transition_lesson(self, lesson_id: str, actor_id: str | None, kind: str, note: str = "", *,
+                                reviewer: bool = False, expected: dict | None = None) -> str:
         from .errors import ApiError
         async with self.pool.acquire() as c:
             async with c.transaction():
                 row = await c.fetchrow("select data, status, author_id from lessons where id = $1 for update", lesson_id)
                 if not row:
                     raise ApiError(404, "not_found", "Lesson not found.")
-                if kind == "submit" and (str(row["author_id"]) != actor_id or row["status"] != "draft"):
-                    raise ApiError(403, "forbidden", "Only the author can submit a draft.")
+                lesson = {**row["data"], "status": row["status"], "author_id": str(row["author_id"]) if row["author_id"] else None}
+                if expected is not None and lesson != expected:
+                    raise ApiError(409, "conflict", "The lesson changed during checks. Try again.")
+                if kind != "submit" and not reviewer:
+                    raise ApiError(403, "forbidden", "An admin must review this lesson.")
+                if kind == "submit" and ((not reviewer and str(row["author_id"]) != actor_id) or row["status"] != "draft"):
+                    raise ApiError(403, "forbidden", "Only the author or an admin can submit a draft.")
                 if kind != "submit" and row["status"] != "in_review":
                     raise ApiError(409, "conflict", "The lesson must be in review first.")
                 if kind == "approve":
@@ -471,13 +617,70 @@ class PgStore:
                 status = {"submit": "in_review", "approve": "published", "request_changes": "draft"}[kind]
                 await c.execute("update lessons set status = $2, data = jsonb_set(data, '{status}', to_jsonb($2::text)), updated_at = now() where id = $1", lesson_id, status)
                 await c.execute("insert into review_events (lesson_id, actor_id, kind, payload) values ($1, $2, $3, $4)",
-                                lesson_id, uuid.UUID(actor_id) if actor_id else None, kind, {"note": note})
+                                lesson_id, uuid.UUID(actor_id) if actor_id else None, kind,
+                                {"note": note, "reviewed": reviewer} if kind == "approve" else {"note": note})
                 return status
+
+    async def unpublish_lesson(self, lesson_id: str, actor_id: str | None, reviewer: bool) -> None:
+        from .errors import ApiError
+        async with self.pool.acquire() as c:
+            async with c.transaction():
+                row = await c.fetchrow("select status, author_id from lessons where id = $1 for update", lesson_id)
+                if not row:
+                    raise ApiError(404, "not_found", "Lesson not found.")
+                check_owner({"author_id": str(row["author_id"]) if row["author_id"] else None}, actor_id, reviewer)
+                if row["status"] != "published":
+                    raise ApiError(409, "conflict", "Only published lessons can be hidden.")
+                await c.execute("update lessons set status = 'draft', data = jsonb_set(data, '{status}', '\"draft\"'::jsonb), updated_at = now() where id = $1", lesson_id)
+                await c.execute("delete from source_chunks where lesson_id = $1", lesson_id)
+                await c.execute("insert into review_events (lesson_id, actor_id, kind, payload) values ($1, $2, 'unpublish', '{}'::jsonb)",
+                                lesson_id, uuid.UUID(actor_id) if actor_id else None)
+
+    async def delete_lesson(self, lesson_id: str, actor_id: str | None, reviewer: bool) -> None:
+        from .errors import ApiError
+        async with self.pool.acquire() as c:
+            async with c.transaction():
+                # FOR UPDATE also blocks new progress FK checks until this transaction ends.
+                row = await c.fetchrow("select data, status, author_id from lessons where id = $1 for update", lesson_id)
+                if not row:
+                    raise ApiError(404, "not_found", "Lesson not found.")
+                check_owner({"author_id": str(row["author_id"]) if row["author_id"] else None}, actor_id, reviewer)
+                if row["status"] != "draft":
+                    raise ApiError(409, "conflict", "Only draft lessons can be deleted. Hide it first.")
+                if await c.fetchval("select exists(select 1 from progress where lesson_id = $1)", lesson_id):
+                    raise ApiError(409, "has_progress", "Learners have progress on this lesson. Keep it hidden instead of deleting it.")
+                config = await c.fetchval("select data from app_config where key = 'tracks' for update") or []
+                for track in config:
+                    for module in track["modules"]:
+                        module["lessons"] = [i for i in module["lessons"] if i != lesson_id]
+                await c.execute("update app_config set data = $1, updated_at = now() where key = 'tracks'", config)
+                await c.execute("delete from source_chunks where lesson_id = $1", lesson_id)
+                await c.execute("insert into admin_events (actor_id, kind, payload) values ($1, 'lesson_deleted', $2)",
+                                uuid.UUID(actor_id) if actor_id else None, {"id": lesson_id, "title": row["data"]["title"]})
+                await c.execute("delete from lessons where id = $1", lesson_id)
+
+    async def change_planned(self, track: str, module: str, actor_id: str | None, *, title: dict | None = None, index: int | None = None) -> None:
+        async with self.pool.acquire() as c:
+            async with c.transaction():
+                config = await c.fetchval("select data from app_config where key = 'tracks' for update") or []
+                kind, payload = edit_planned(config, track, module, title, index)
+                await c.execute("update app_config set data = $1, updated_at = now() where key = 'tracks'", config)
+                await c.execute("insert into admin_events (actor_id, kind, payload) values ($1, $2, $3)",
+                                uuid.UUID(actor_id) if actor_id else None, kind, payload)
 
     async def pending_sources(self) -> list[dict]:
         async with self.pool.acquire() as c:
             rows = await c.fetch("select * from sources where review_status = 'pending' order by id")
         return [dict(r) for r in rows]
+
+    async def add_source(self, source: dict) -> dict:
+        # An entry that already exists is kept as it is: curated and approved sources are never overwritten.
+        cols = ", ".join(CORE_SOURCE_FIELDS)
+        places = ", ".join(f"${i + 1}" for i in range(len(CORE_SOURCE_FIELDS) + 1))
+        async with self.pool.acquire() as c:
+            await c.execute(f"insert into sources ({cols}, extra) values ({places}) on conflict (id) do nothing",
+                            *[source.get(k) for k in CORE_SOURCE_FIELDS], source_extra(source))
+        return (await self.get_sources([source["id"]]))[source["id"]]
 
     async def approve_source(self, source_id: str, actor_id: str | None) -> None:
         from .errors import ApiError

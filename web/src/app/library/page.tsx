@@ -14,7 +14,7 @@ import { useSession } from "@/lib/session";
 import { useIsClient } from "@/lib/store";
 import { S } from "@/lib/strings";
 import { useOnboarding } from "@/lib/onboarding-state";
-import type { Lesson, TrackId } from "@/lib/types";
+import { lessonLevel, type Lesson, type TrackId } from "@/lib/types";
 
 type View = "learn" | "browse";
 
@@ -207,7 +207,7 @@ function Browse({ filter, setFilter }: { filter: TrackId | "all"; setFilter: (f:
                   <div className="mt-3 flex items-center gap-4 text-xs text-muted">
                     <span className="flex items-center gap-1"><Layers className="h-3.5 w-3.5" /> {l.cards.length} {t(S.library.cards)}</span>
                     <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {l.minutes} {t(S.library.min)}</span>
-                    <span>{t(l.level === "deeper" ? S.library.deeper : S.library.foundation)}</span>
+                    <span>{t(S.library.levels[lessonLevel(l.level)])}</span>
                   </div>
                   <div className="mt-3 h-1.5 rounded-full bg-line">
                     <div className="h-full rounded-full bg-brand-500" style={{ width: `${pct}%` }} />

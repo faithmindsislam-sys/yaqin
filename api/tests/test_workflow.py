@@ -41,12 +41,12 @@ def test_author_review_publish_workflow_updates_live_content(client, fake_llm, a
         assert body["lessons"]["new-lesson"]["status"] == "published"
         assert "new-lesson" in body["tracks"][0]["modules"][0]["lessons"]
         assert client.post("/api/review/drafts", json=draft()).status_code == 403
-        assert [e["kind"] for e in get_store().events] == ["submit", "approve"]
+        assert [e["kind"] for e in get_store().events] == ["created", "submit", "approve"]
     finally:
         app.dependency_overrides.clear()
 
 
-def test_pending_sources_never_enter_tutor_and_block_publication(client, fake_llm):
+def test_pending_sources_never_enter_tutor_and_block_publication(client, fake_llm, monkeypatch):
     store = get_store()
     store.sources["quran:5:6"]["review_status"] = "pending"
     store.reload_index()
@@ -78,7 +78,7 @@ def test_draft_validation_and_unsaved_precheck(client, fake_llm):
         assert get_store().lessons["new-lesson"]["status"] == "draft"
         fake_llm()
         assert client.post("/api/review/check", json=draft()).status_code == 200
-        assert get_store().events == []
+        assert [e["kind"] for e in get_store().events] == ["created"]  # the pre-check itself records nothing
         assert client.post("/api/review/check", json={"lesson": draft()}).status_code == 400
         assert client.post("/api/review/sources/quran:5:6/approve", json={}).status_code == 403
     finally:

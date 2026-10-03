@@ -20,7 +20,7 @@ TRACKS = {"explore", "first-steps", "deepen"}
 CARD_KINDS = {"concept", "quote", "practice", "check"}
 LABELS = {"obligatory", "recommended", "suggestion"}
 VISUALS = {"steps", "order", "compass", "book", "none"}
-LEVELS = {"foundation", "deeper"}
+LEVELS = {1, 2, 3, 4, "foundation", "deeper"}
 STATUSES = {"draft", "in_review", "published"}
 SOURCE_KINDS = {"quran", "hadith", "tafsir", "fiqh", "aqidah", "faq", "dictionary"}
 NGRAM = {"ar": 4, "en": 6}
@@ -88,6 +88,10 @@ def check_source_fields(where, s):
     if s.get("kind") == "hadith" and not s.get("grading"):
         err(where, "hadith without a grading")
     if s.get("kind") == "hadith" and s["id"].startswith("hadith:henc:"):
+        policy = {"provider": "hadeethenc", "canonical_for": "hadith", "source_of_truth": True, "priority": "primary"}
+        for key, value in policy.items():
+            if s.get(key) != value:
+                err(where, f"canonical HadeethEnc source requires {key}={value!r}")
         for key in ("explanation_en", "explanation_ar"):
             if s.get(key) is not None and not isinstance(s[key], str):
                 err(where, f"'{key}' must be a string")

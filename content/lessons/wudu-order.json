@@ -1,8 +1,8 @@
 {
   "id": "wudu-order",
-  "track": "first-steps",
-  "module": "purification",
-  "level": "foundation",
+  "track": "explore",
+  "module": "common-questions",
+  "level": 1,
   "minutes": 5,
   "title": {
     "en": "The order of wudu",

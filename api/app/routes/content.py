@@ -8,10 +8,16 @@ from ..retrieval import lesson_source_ids
 router = APIRouter()
 
 
+def public_lesson(lesson: dict) -> dict:
+    """Contributors are staff email addresses: they stay in Studio and never reach learner responses."""
+    return {k: v for k, v in lesson.items() if k != "contributors"}
+
+
 @router.get("/content")
 async def content_bundle(response: Response):
     response.headers["Cache-Control"] = "no-store"
-    return await get_store().content_bundle()
+    bundle = await get_store().content_bundle()
+    return {**bundle, "lessons": {i: public_lesson(l) for i, l in bundle["lessons"].items()}}
 
 
 @router.get("/tracks")
@@ -26,7 +32,7 @@ async def lesson(lesson_id: str, user: User = Depends(current_user)):
     data = await store.get_lesson(lesson_id, include_unpublished=staff)
     if data is None or (data.get("status") != "published" and not has_role(user, "admin") and data.get("author_id") != user.id):
         raise ApiError(404, "not_found", f"No lesson '{lesson_id}'.")
-    return {**data, "sources_by_id": await store.get_sources(lesson_source_ids(data))}
+    return {**(data if staff else public_lesson(data)), "sources_by_id": await store.get_sources(lesson_source_ids(data))}
 
 
 @router.get("/sources/{source_id}")
