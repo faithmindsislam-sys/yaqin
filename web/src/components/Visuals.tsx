@@ -41,7 +41,7 @@ function BookVisual({ className }: Props) {
           </g>
           <path d="M0 -55 V50" stroke="#d9c9a6" strokeWidth="2" />
         </g>
-        <g fill="#2ef2c2" opacity=".8">
+        <g fill="#f1a287" opacity=".8">
           <circle cx="120" cy="80" r="3" />
           <circle cx="520" cy="110" r="2.5" />
           <circle cx="470" cy="60" r="2" />
@@ -63,7 +63,7 @@ function CompassVisual({ className }: Props) {
             <rect key={a} x="-2" y="-118" width="4" height="16" fill="#ffffffaa" transform={`rotate(${a})`} />
           ))}
           <g transform="rotate(32)">
-            <path d="M0 -100 L14 0 L0 18 L-14 0Z" fill="#2ef2c2" />
+            <path d="M0 -100 L14 0 L0 18 L-14 0Z" fill="#f1a287" />
             <path d="M0 100 L14 0 L0 -18 L-14 0Z" fill="#ffffff55" />
           </g>
           <circle r="9" fill="#fff" />
@@ -87,7 +87,7 @@ function OrderVisual({ labels = [], className }: Props) {
   return (
     <div className={`${FRAME} ${className}`}>
       <svg viewBox="0 0 640 360" className="h-full w-full" aria-hidden>
-        <path d="M110 205 C180 120 220 120 250 135 S350 270 400 245 S500 150 540 175" fill="none" stroke="#2ef2c2" strokeWidth="7" strokeDasharray="3 14" strokeLinecap="round" />
+        <path d="M110 205 C180 120 220 120 250 135 S350 270 400 245 S500 150 540 175" fill="none" stroke="#f1a287" strokeWidth="7" strokeDasharray="3 14" strokeLinecap="round" />
         {pts.map(([x, y], i) => (
           <g key={i} transform={`translate(${x} ${y})`}>
             <circle r={i === 0 ? 40 : 34} fill={i === 0 ? "#6150ea" : "#ffffff22"} stroke="#fff" strokeWidth={i === 0 ? 5 : 3} />
@@ -110,8 +110,8 @@ function StepsVisual({ className }: Props) {
       <svg viewBox="0 0 640 360" className="h-full w-full" aria-hidden>
         <defs>
           <linearGradient id="sv-w" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor="#bff7ff" />
-            <stop offset="1" stopColor="#2ef2c2" />
+            <stop offset="0" stopColor="#ffffff" />
+            <stop offset="1" stopColor="#bcd7f5" />
           </linearGradient>
         </defs>
         <path d="M60 300 C160 290 220 250 300 250 S470 290 580 280" fill="none" stroke="#ffffff55" strokeWidth="3" />

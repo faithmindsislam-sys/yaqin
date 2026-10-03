@@ -26,8 +26,8 @@ export default function SignIn() {
   const [unconfirmed, setUnconfirmed] = useState(false);
 
   useEffect(() => {
-    if (ready && user) router.replace(prefs.onboarded ? "/app/" : "/start/");
-  }, [ready, user, prefs.onboarded, router]);
+    if (ready && user) router.replace("/app/");
+  }, [ready, user, router]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -97,13 +97,13 @@ export default function SignIn() {
     <div className="min-h-dvh p-3 sm:p-5">
       <div className="mx-auto grid min-h-[calc(100dvh-1.5rem)] max-w-7xl overflow-hidden rounded-3xl border border-line bg-white shadow-[var(--shadow-lift)] sm:min-h-[calc(100dvh-2.5rem)] lg:grid-cols-[1.1fr_1fr]">
         {/* Story side */}
-        <div className="relative hidden overflow-hidden bg-[#173d3d] lg:block">
+        <div className="relative hidden overflow-hidden bg-brand-800 lg:block">
           {/* Photo: Izuddin Helmi Adnan on Unsplash (free licence) — unsplash.com/photos/JFirQekVo3U */}
           <div
             className="absolute inset-0 bg-cover bg-[center_58%]"
             style={{ backgroundImage: "url(https://images.unsplash.com/photo-1513072064285-240f87fa81e8?q=80&w=1400&auto=format&fit=crop)" }}
           />
-          <div className="absolute inset-0 bg-[#0c2a2a]/25" />
+          <div className="absolute inset-0 bg-[#0b1b33]/25" />
         </div>
 
         {/* Form side */}
@@ -165,12 +165,12 @@ export default function SignIn() {
                   </button>
                 </div>
                 {mode === "in" && (
-                  <button type="button" onClick={forgot} disabled={busy || !authAvailable} className="absolute end-0 top-0 text-sm text-teal-700 hover:underline">{t(S.auth.forgot)}</button>
+                  <button type="button" onClick={forgot} disabled={busy || !authAvailable} className="absolute end-0 top-0 text-sm text-brand-700 hover:underline">{t(S.auth.forgot)}</button>
                 )}
               </div>
               {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">{error}</p>}
-              {message && <p className="rounded-xl bg-teal-50 p-3 text-sm text-teal-800" role="status">{message}</p>}
-              {unconfirmed && <button type="button" onClick={resendConfirmation} disabled={busy} className="text-sm text-teal-700 hover:underline">{t({ en: "Resend confirmation email", ar: "إعادة إرسال رسالة التأكيد" })}</button>}
+              {message && <p className="rounded-xl bg-brand-50 p-3 text-sm text-brand-800" role="status">{message}</p>}
+              {unconfirmed && <button type="button" onClick={resendConfirmation} disabled={busy} className="text-sm text-brand-700 hover:underline">{t({ en: "Resend confirmation email", ar: "إعادة إرسال رسالة التأكيد" })}</button>}
               <button className="btn btn-primary w-full" disabled={busy || !authAvailable}>
                 {t(mode === "in" ? S.auth.signIn : S.auth.signUp)} <span aria-hidden className="rtl:rotate-180">→</span>
               </button>
@@ -202,7 +202,7 @@ export default function SignIn() {
 
             <p className="mt-4 text-center text-sm text-ink-soft">
               {t(mode === "in" ? S.auth.noAccount : S.auth.haveAccount)}{" "}
-              <button onClick={() => setMode(mode === "in" ? "up" : "in")} className="font-medium text-teal-700 hover:underline">
+              <button onClick={() => setMode(mode === "in" ? "up" : "in")} className="font-medium text-brand-700 hover:underline">
                 {t(mode === "in" ? S.auth.signUp : S.auth.signIn)}
               </button>
             </p>

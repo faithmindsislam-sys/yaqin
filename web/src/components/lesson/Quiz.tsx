@@ -45,11 +45,11 @@ export function Quiz({ lesson, onFinish }: { lesson: Lesson; onFinish: (score: n
               disabled={answered}
               onClick={() => setPicked(idx)}
               className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-4 text-start transition ${
-                state === "right" ? "border-teal-400 bg-teal-50 font-medium" : state === "wrong" ? "border-rose/50 bg-rose/5" : "border-line bg-white hover:border-teal-300"
+                state === "right" ? "border-brand-400 bg-brand-50 font-medium" : state === "wrong" ? "border-rose/50 bg-rose/5" : "border-line bg-white hover:border-brand-300"
               }`}
             >
               <span>{t(opt)}</span>
-              {state === "right" && <Check className="h-5 w-5 text-teal-600" />}
+              {state === "right" && <Check className="h-5 w-5 text-brand-600" />}
               {state === "wrong" && <X className="h-5 w-5 text-rose" />}
             </button>
           );
@@ -57,7 +57,7 @@ export function Quiz({ lesson, onFinish }: { lesson: Lesson; onFinish: (score: n
       </div>
       {answered && (
         <div className="mt-5 space-y-3">
-          <p className={`font-semibold ${right ? "text-teal-700" : "text-rose"}`}>{t(right ? S.lesson.correct : S.lesson.notQuite)}</p>
+          <p className={`font-semibold ${right ? "text-brand-700" : "text-rose"}`}>{t(right ? S.lesson.correct : S.lesson.notQuite)}</p>
           {q.explanation && <p className="text-ink-soft">{t(q.explanation)}</p>}
           {q.source && <SourceQuote id={q.source} compact />}
           <button className="btn btn-primary" onClick={next}>

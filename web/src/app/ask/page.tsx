@@ -105,7 +105,7 @@ function AskAndCheck() {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{t(S.ask.trusted)}</p>
           <ul className="space-y-1.5 text-sm text-ink-soft">
             {[S.trust.quran, S.trust.hadith, S.trust.tafsir, S.trust.review].map((s) => (
-              <li key={s.en} className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-teal-400" /> {t(s)}</li>
+              <li key={s.en} className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand-400" /> {t(s)}</li>
             ))}
           </ul>
         </div>
@@ -113,7 +113,7 @@ function AskAndCheck() {
 
       <section className="card flex min-h-[70vh] min-w-0 flex-col">
         <header className="flex items-center gap-3 border-b border-line p-5">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-b from-teal-400 to-teal-700 text-white">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-b from-brand-400 to-brand-700 text-white">
             <Bot className="h-5 w-5" />
           </span>
           <div>
@@ -129,7 +129,7 @@ function AskAndCheck() {
               <h2 className="font-serif text-2xl text-ink">{t({ en: "What would you like to understand?", ar: "ما الذي ترغب في فهمه؟" })}</h2>
               <p className="pb-3 text-sm text-muted">{t({ en: "Start with a question, or choose one below.", ar: "ابدأ بسؤال، أو اختر سؤالًا أدناه." })}</p>
               {EXAMPLES[track].map((e) => (
-                <button key={e.en} onClick={() => send(t(e))} className="block w-full rounded-xl border border-line p-4 text-start text-sm text-ink-soft hover:border-teal-300">
+                <button key={e.en} onClick={() => send(t(e))} className="block w-full rounded-xl border border-line p-4 text-start text-sm text-ink-soft hover:border-brand-300">
                   {t(e)}
                 </button>
               ))}
@@ -138,7 +138,7 @@ function AskAndCheck() {
           {msgs.map((m, i) =>
             m.role === "user" ? (
               <div key={i} className="flex justify-end">
-                <p className="max-w-[85%] rounded-2xl rounded-ee-md bg-teal-600 px-4 py-2.5 text-white">{m.text}</p>
+                <p className="max-w-[85%] rounded-2xl rounded-ee-md bg-brand-600 px-4 py-2.5 text-white">{m.text}</p>
               </div>
             ) : m.role === "assistant" ? (
               <div key={i} className="max-w-[92%] rounded-2xl rounded-es-md border border-line bg-white p-4">
@@ -167,7 +167,7 @@ function AskAndCheck() {
                   {dictation.listening ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                 </button>
               )}
-              <button className="rounded-full bg-teal-600 p-2 text-white disabled:opacity-40" disabled={busy || !q.trim()} aria-label={t(S.ask.send)}>
+              <button className="rounded-full bg-brand-600 p-2 text-white disabled:opacity-40" disabled={busy || !q.trim()} aria-label={t(S.ask.send)}>
                 <Send className="h-4 w-4 rtl:-scale-x-100" />
               </button>
             </div>

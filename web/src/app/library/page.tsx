@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import { Clock, Layers, Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CardVisual } from "@/components/Visuals";
@@ -10,12 +11,13 @@ import { useContent } from "@/lib/content";
 import { useI18n } from "@/lib/i18n";
 import { useProgress } from "@/lib/progress";
 import { S } from "@/lib/strings";
+import { useOnboarding } from "@/lib/onboarding-state";
 import type { TrackId } from "@/lib/types";
 
 export default function LibraryPage() {
   return (
     <AppShell requireSession={false}>
-      <Library />
+      <Suspense><Library /></Suspense>
     </AppShell>
   );
 }
@@ -24,7 +26,9 @@ function Library() {
   const { allLessons, tracks } = useContent();
   const { t } = useI18n();
   const progress = useProgress();
-  const [filter, setFilter] = useState<TrackId | "all">("all");
+  const params = useSearchParams();
+  const { setScreen } = useOnboarding();
+  const [filter, setFilter] = useState<TrackId | "all">(() => params.get("track") === "explore" ? "explore" : "all");
   const [query, setQuery] = useState("");
 
   const list = useMemo(() => {
@@ -42,6 +46,7 @@ function Library() {
       <header>
         <h1 className="font-serif text-4xl text-ink">{t(S.library.title)}</h1>
         <p className="mt-1 text-ink-soft">{t(S.library.sub)}</p>
+        {filter === "explore" && <Link href="/start/explore/" onClick={() => setScreen(1)} className="mt-3 inline-flex min-h-11 items-center text-sm text-brand-700 hover:underline">{t({ en: "Edit my answers", ar: "عدّل إجاباتي" })}</Link>}
       </header>
 
       <div className="relative">
@@ -55,7 +60,7 @@ function Library() {
             key={f.id}
             onClick={() => setFilter(f.id)}
             aria-pressed={filter === f.id}
-            className={`rounded-full border px-4 py-1.5 text-sm transition ${filter === f.id ? "border-teal-500 bg-teal-500 text-white" : "border-line bg-white text-ink-soft hover:border-teal-300"}`}
+            className={`rounded-full border px-4 py-1.5 text-sm transition ${filter === f.id ? "border-brand-500 bg-brand-500 text-white" : "border-line bg-white text-ink-soft hover:border-brand-300"}`}
           >
             {t(f.title)}
           </button>
@@ -79,7 +84,7 @@ function Library() {
                   <span className={`absolute start-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.ring}`}>{track ? t(track.title) : ""}</span>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-ink group-hover:text-teal-800">{t(l.title)}</h3>
+                  <h3 className="font-semibold text-ink group-hover:text-brand-800">{t(l.title)}</h3>
                   <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{t(l.summary)}</p>
                   <div className="mt-3 flex items-center gap-4 text-xs text-muted">
                     <span className="flex items-center gap-1"><Layers className="h-3.5 w-3.5" /> {l.cards.length} {t(S.library.cards)}</span>
@@ -87,7 +92,7 @@ function Library() {
                     <span>{t(l.level === "deeper" ? S.library.deeper : S.library.foundation)}</span>
                   </div>
                   <div className="mt-3 h-1.5 rounded-full bg-line">
-                    <div className="h-full rounded-full bg-teal-500" style={{ width: `${pct}%` }} />
+                    <div className="h-full rounded-full bg-brand-500" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               </Link>

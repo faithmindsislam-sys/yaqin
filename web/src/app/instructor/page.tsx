@@ -84,7 +84,7 @@ function Workspace() {
       </header>
 
       {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {message && <p role="status" className="rounded-xl bg-teal-50 p-3 text-sm text-teal-800">{message}</p>}
+      {message && <p role="status" className="rounded-xl bg-brand-50 p-3 text-sm text-brand-800">{message}</p>}
       <section className="card p-6">
         <h2 className="font-serif text-2xl">{t({ en: "Drafts and lesson reviews", ar: "المسودات ومراجعة الدروس" })}</h2>
         <label className="mt-4 block text-sm">{t({ en: "Review note", ar: "ملاحظة المراجعة" })}<input className="input mt-2" value={note} maxLength={4000} onChange={(e) => setNote(e.target.value)} /></label>
@@ -102,7 +102,7 @@ function Workspace() {
         {!staff.length && <p className="mt-3 text-sm text-muted">{t({ en: "No drafts yet. Use a sample below and give the new lesson a unique id.", ar: "لا توجد مسودات. استخدم النموذج أدناه وحدّد معرّفًا جديدًا للدرس." })}</p>}
       </section>
       <section className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        <Stat icon={<BookCheck className="h-6 w-6 text-teal-600" />} value={lessons.length} label={t(S.instructor.lessonsPublished)} />
+        <Stat icon={<BookCheck className="h-6 w-6 text-brand-600" />} value={lessons.length} label={t(S.instructor.lessonsPublished)} />
         <Stat icon={<FileClock className="h-6 w-6 text-amber-600" />} value={pending.length} label={t(S.instructor.sourcesPending)} />
         <Stat icon={<ShieldCheck className="h-6 w-6 text-[#6150ea]" />} value={Object.keys(sources).length} label={t(S.pillars.sources)} />
       </section>
@@ -110,7 +110,7 @@ function Workspace() {
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <section className="card p-6">
           <h2 className="flex items-center gap-2 font-serif text-2xl text-ink">
-            <ClipboardCheck className="h-5 w-5 text-teal-600" /> {t(S.instructor.queue)}
+            <ClipboardCheck className="h-5 w-5 text-brand-600" /> {t(S.instructor.queue)}
           </h2>
           <ul className="mt-4 divide-y divide-line">
             {pending.map((s) => (
@@ -151,7 +151,7 @@ function Workspace() {
 
           {result && (
             <div className="mt-5 space-y-3">
-              <p className={`flex items-center gap-2 font-semibold ${result.ready_for_reviewer ? "text-teal-700" : "text-amber-800"}`}>
+              <p className={`flex items-center gap-2 font-semibold ${result.ready_for_reviewer ? "text-brand-700" : "text-amber-800"}`}>
                 {result.ready_for_reviewer ? <CheckCircle2 className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
                 {result.ready_for_reviewer ? "Ready for scholarly review" : "Needs changes before review"}
               </p>

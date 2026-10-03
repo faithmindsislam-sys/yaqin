@@ -20,8 +20,8 @@ export const TRACK_META: Record<TrackId, { icon: typeof Compass; tint: string; r
   },
   "first-steps": {
     icon: Sprout,
-    tint: "from-teal-50 to-white",
-    ring: "bg-teal-100 text-teal-700",
+    tint: "from-brand-50 to-white",
+    ring: "bg-brand-100 text-brand-700",
     tags: [
       { en: "First steps", ar: "الخطوات الأولى" },
       { en: "Daily practice", ar: "عمل يومي" },
@@ -30,8 +30,8 @@ export const TRACK_META: Record<TrackId, { icon: typeof Compass; tint: string; r
   },
   deepen: {
     icon: BookOpen,
-    tint: "from-[#fbf6ec] to-white",
-    ring: "bg-[#f4e8cf] text-[#8a6416]",
+    tint: "from-salmon-50 to-white",
+    ring: "bg-salmon-100 text-salmon-700",
     tags: [
       { en: "Qur'an", ar: "القرآن" },
       { en: "Tafsir", ar: "التفسير" },
@@ -50,7 +50,7 @@ export function LangToggle({ className = "" }: { className?: string }) {
           key={l}
           onClick={() => setLang(l)}
           aria-pressed={lang === l}
-          className={`rounded-full px-2.5 py-1 transition ${lang === l ? "bg-teal-50 font-semibold text-teal-700" : "text-muted"}`}
+          className={`rounded-full px-2.5 py-1 transition ${lang === l ? "bg-brand-50 font-semibold text-brand-700" : "text-muted"}`}
         >
           {l === "en" ? "EN" : "العربية"}
         </button>
@@ -67,7 +67,7 @@ export function SourceQuote({ id, source, compact = false }: { id: string; sourc
   if (!s) return null;
   const isScripture = s.kind === "quran" || s.kind === "hadith";
   return (
-    <figure className={`rounded-2xl border-s-4 border-teal-300 bg-teal-50/60 ${compact ? "p-3" : "p-4 sm:p-5"}`}>
+    <figure className={`rounded-2xl border-s-4 border-brand-300 bg-brand-50/60 ${compact ? "p-3" : "p-4 sm:p-5"}`}>
       {s.text_ar && (
         <blockquote
           className={`${s.kind === "quran" ? "quran" : "font-sans"} text-ink ${compact ? "text-lg" : "text-xl sm:text-2xl"}`}
@@ -83,12 +83,12 @@ export function SourceQuote({ id, source, compact = false }: { id: string; sourc
         </p>
       )}
       <figcaption className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
-        <span className="font-medium text-teal-700">{lang === "ar" ? s.ref_ar : s.ref_en}</span>
+        <span className="font-medium text-brand-700">{lang === "ar" ? s.ref_ar : s.ref_en}</span>
         {s.grading && <span>· {s.grading}</span>}
         {isScripture && <span className="chip !py-0 !text-[0.7rem]">{t(S.lesson.revealed)}</span>}
         {s.review_status === "pending" && <span className="text-[0.7rem] opacity-80">· {t(S.lesson.pendingReview)}</span>}
         {s.url && (
-          <a href={s.url} target="_blank" rel="noreferrer" className="underline decoration-dotted underline-offset-2 hover:text-teal-700">
+          <a href={s.url} target="_blank" rel="noreferrer" className="underline decoration-dotted underline-offset-2 hover:text-brand-700">
             {s.origin ?? "link"}
           </a>
         )}
@@ -120,7 +120,7 @@ export function Section({ title, sub, action, children, className = "" }: {
 
 export function ArrowLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-800">
+    <Link href={href} className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:text-brand-800">
       {children}
       <span aria-hidden className="rtl:rotate-180">→</span>
     </Link>

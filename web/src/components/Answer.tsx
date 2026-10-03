@@ -7,7 +7,7 @@ import type { AskResponse, Tier } from "@/lib/types";
 import { SourceQuote } from "./ui";
 
 const TIER_STYLE: Record<Tier, { cls: string; icon: typeof Info }> = {
-  A: { cls: "bg-teal-50 text-teal-800 border-teal-200", icon: BadgeCheck },
+  A: { cls: "bg-brand-50 text-brand-800 border-brand-200", icon: BadgeCheck },
   B: { cls: "bg-sky-100 text-ink border-sky-200", icon: Info },
   C: { cls: "bg-amber-50 text-amber-900 border-amber-200", icon: Scale },
   D: { cls: "bg-violet-50 text-violet-900 border-violet-200", icon: UserRoundSearch },
@@ -73,7 +73,7 @@ export function AnswerView({ data, compact = false, onFollowUp }: { data: AskRes
           <p className="mb-2 text-xs text-muted">{t(S.ask.followUps)}</p>
           <div className="flex flex-wrap gap-2">
             {data.follow_ups.map((q) => (
-              <button key={q} onClick={() => onFollowUp(q)} className="chip transition hover:border-teal-300 hover:text-teal-800">
+              <button key={q} onClick={() => onFollowUp(q)} className="chip transition hover:border-brand-300 hover:text-brand-800">
                 {q}
               </button>
             ))}

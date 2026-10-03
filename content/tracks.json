@@ -1,7 +1,10 @@
 [
   {
     "id": "explore",
-    "title": { "en": "Explore Islam", "ar": "اكتشف الإسلام" },
+    "title": {
+      "en": "Explore Islam",
+      "ar": "اكتشف الإسلام"
+    },
     "tagline": {
       "en": "Clear, sourced answers to the questions people actually ask.",
       "ar": "أجوبة واضحة وموثّقة عن الأسئلة التي يطرحها الناس فعلًا."
@@ -13,14 +16,84 @@
     "modules": [
       {
         "id": "common-questions",
-        "title": { "en": "Common questions", "ar": "أسئلة متكررة" },
-        "lessons": ["who-is-god", "kaaba-qibla", "spread-by-sword"]
+        "title": {
+          "en": "Common questions",
+          "ar": "أسئلة متكررة"
+        },
+        "lessons": [
+          "who-is-god",
+          "kaaba-qibla",
+          "spread-by-sword"
+        ]
+      },
+      {
+        "id": "prophet-muhammad",
+        "title": {
+          "en": "Prophet Muhammad ﷺ",
+          "ar": "النبي محمد ﷺ"
+        },
+        "lessons": [],
+        "planned": [
+          {
+            "en": "Who was Prophet Muhammad ﷺ?",
+            "ar": "من هو النبي محمد ﷺ؟"
+          },
+          {
+            "en": "His early life in Makkah",
+            "ar": "نشأته في مكة"
+          },
+          {
+            "en": "The first revelation",
+            "ar": "بداية الوحي"
+          },
+          {
+            "en": "His character and mercy",
+            "ar": "أخلاقه ورحمته"
+          }
+        ]
+      },
+      {
+        "id": "the-quran",
+        "title": {
+          "en": "The Qur'an",
+          "ar": "القرآن الكريم"
+        },
+        "lessons": [],
+        "planned": [
+          {
+            "en": "What is the Qur'an?",
+            "ar": "ما هو القرآن؟"
+          },
+          {
+            "en": "How the Qur'an was revealed",
+            "ar": "كيف نزل القرآن"
+          },
+          {
+            "en": "How the Qur'an was preserved",
+            "ar": "كيف حُفظ القرآن"
+          },
+          {
+            "en": "The main themes of the Qur'an",
+            "ar": "موضوعات القرآن الكبرى"
+          },
+          {
+            "en": "Stories of the prophets",
+            "ar": "قصص الأنبياء في القرآن"
+          },
+          {
+            "en": "How Muslims recite the Qur'an",
+            "ar": "كيف يتلو المسلمون القرآن"
+          }
+        ]
       }
     ]
   },
   {
     "id": "first-steps",
-    "title": { "en": "First Steps", "ar": "خطواتي الأولى" },
+    "title": {
+      "en": "First Steps",
+      "ar": "خطواتي الأولى"
+    },
     "tagline": {
       "en": "A gentle daily path for your first weeks as a Muslim.",
       "ar": "مسار يومي هادئ لأسابيعك الأولى في الإسلام."
@@ -32,14 +105,83 @@
     "modules": [
       {
         "id": "purification",
-        "title": { "en": "Purification", "ar": "الطهارة" },
-        "lessons": ["wudu-order", "what-breaks-wudu"]
+        "title": {
+          "en": "Purification",
+          "ar": "الطهارة"
+        },
+        "lessons": [
+          "wudu-order",
+          "what-breaks-wudu"
+        ]
+      },
+      {
+        "id": "prayer",
+        "title": {
+          "en": "Prayer",
+          "ar": "الصلاة"
+        },
+        "lessons": [],
+        "planned": [
+          {
+            "en": "Why Muslims pray",
+            "ar": "لماذا يصلّي المسلمون؟"
+          },
+          {
+            "en": "The five prayers and their times",
+            "ar": "الصلوات الخمس وأوقاتها"
+          },
+          {
+            "en": "How to pray, step by step",
+            "ar": "كيف تصلّي خطوة بخطوة"
+          },
+          {
+            "en": "What to recite in prayer",
+            "ar": "ماذا تقرأ في الصلاة"
+          }
+        ]
+      },
+      {
+        "id": "fasting",
+        "title": {
+          "en": "Fasting",
+          "ar": "الصيام"
+        },
+        "lessons": [],
+        "planned": [
+          {
+            "en": "What is Ramadan?",
+            "ar": "ما هو رمضان؟"
+          },
+          {
+            "en": "Who must fast",
+            "ar": "على من يجب الصيام"
+          },
+          {
+            "en": "What breaks the fast",
+            "ar": "مفطرات الصيام"
+          },
+          {
+            "en": "Suhoor and iftar",
+            "ar": "السحور والإفطار"
+          },
+          {
+            "en": "Night prayer in Ramadan",
+            "ar": "قيام الليل في رمضان"
+          },
+          {
+            "en": "Zakat al-Fitr and Eid",
+            "ar": "زكاة الفطر والعيد"
+          }
+        ]
       }
     ]
   },
   {
     "id": "deepen",
-    "title": { "en": "Deepen My Knowledge", "ar": "أعمّق معرفتي" },
+    "title": {
+      "en": "Deepen My Knowledge",
+      "ar": "أعمّق معرفتي"
+    },
     "tagline": {
       "en": "Understand what you already practise, from approved sources.",
       "ar": "افهم ما تمارسه كل يوم، من مصادر معتمدة."
@@ -51,8 +193,74 @@
     "modules": [
       {
         "id": "understand-what-you-recite",
-        "title": { "en": "Understand what you recite", "ar": "افهم ما تتلوه" },
-        "lessons": ["al-fatiha-meaning", "why-face-qibla"]
+        "title": {
+          "en": "Understand what you recite",
+          "ar": "افهم ما تتلوه"
+        },
+        "lessons": [
+          "al-fatiha-meaning",
+          "why-face-qibla"
+        ]
+      },
+      {
+        "id": "understanding-hadith",
+        "title": {
+          "en": "Understanding hadith",
+          "ar": "فهم الحديث"
+        },
+        "lessons": [],
+        "planned": [
+          {
+            "en": "What is a hadith?",
+            "ar": "ما هو الحديث؟"
+          },
+          {
+            "en": "How hadith were collected",
+            "ar": "كيف جُمع الحديث"
+          },
+          {
+            "en": "Sahih, hasan and weak",
+            "ar": "الصحيح والحسن والضعيف"
+          },
+          {
+            "en": "The famous hadith books",
+            "ar": "كتب الحديث المشهورة"
+          }
+        ]
+      },
+      {
+        "id": "fiqh-of-worship",
+        "title": {
+          "en": "Fiqh of worship",
+          "ar": "فقه العبادات"
+        },
+        "lessons": [],
+        "planned": [
+          {
+            "en": "What is fiqh?",
+            "ar": "ما هو الفقه؟"
+          },
+          {
+            "en": "The four schools of fiqh",
+            "ar": "المذاهب الفقهية الأربعة"
+          },
+          {
+            "en": "Fiqh of purification",
+            "ar": "فقه الطهارة"
+          },
+          {
+            "en": "Fiqh of prayer",
+            "ar": "فقه الصلاة"
+          },
+          {
+            "en": "Fiqh of fasting",
+            "ar": "فقه الصيام"
+          },
+          {
+            "en": "Fiqh of zakat",
+            "ar": "فقه الزكاة"
+          }
+        ]
       }
     ]
   }

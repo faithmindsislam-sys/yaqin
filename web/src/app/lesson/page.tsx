@@ -94,7 +94,7 @@ function LessonPlayer() {
           </span>
         </div>
         <div className="mt-3 h-2 rounded-full bg-line">
-          <div className="h-full rounded-full bg-gradient-to-r from-teal-400 to-teal-600 transition-all duration-500" style={{ width: `${(position / total) * 100}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 transition-all duration-500" style={{ width: `${(position / total) * 100}%` }} />
         </div>
 
         <div className="mt-8">

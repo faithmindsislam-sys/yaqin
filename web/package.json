@@ -10,7 +10,8 @@
     "build": "next build",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check:progress": "node scripts/check-progress.mjs"
+    "check:progress": "node scripts/check-progress.mjs",
+    "check:onboarding": "node scripts/check-onboarding.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

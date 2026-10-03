@@ -55,7 +55,7 @@ export function ExplainBack({ lesson, onDone }: { lesson: Lesson; onDone: () => 
         {dictation.listening && (
           <span className="flex h-8 items-end gap-1" aria-hidden>
             {[10, 22, 14, 28, 18, 24, 12].map((h, i) => (
-              <span key={i} className="w-1.5 animate-pulse rounded bg-teal-500" style={{ height: h, animationDelay: `${i * 90}ms` }} />
+              <span key={i} className="w-1.5 animate-pulse rounded bg-brand-500" style={{ height: h, animationDelay: `${i * 90}ms` }} />
             ))}
           </span>
         )}
@@ -76,12 +76,12 @@ export function ExplainBack({ lesson, onDone }: { lesson: Lesson; onDone: () => 
       {result && (
         <div className="mt-8 space-y-4">
           {result.covered.length > 0 && (
-            <div className="rounded-2xl border border-teal-200 bg-teal-50/70 p-4">
-              <p className="mb-2 font-semibold text-teal-800">{t(S.lesson.good)}</p>
+            <div className="rounded-2xl border border-brand-200 bg-brand-50/70 p-4">
+              <p className="mb-2 font-semibold text-brand-800">{t(S.lesson.good)}</p>
               <ul className="space-y-1.5">
                 {result.covered.map((id) => (
                   <li key={id} className="flex gap-2 text-ink">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" /> {idea(id)?.[lang]}
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" /> {idea(id)?.[lang]}
                   </li>
                 ))}
               </ul>

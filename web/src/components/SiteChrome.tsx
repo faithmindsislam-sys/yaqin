@@ -23,7 +23,7 @@ export function SiteHeader() {
         </nav>
         <div className="flex items-center gap-3">
           <LangToggle className="header-lang" />
-          {!inApp && <Link href="/signin/" className="header-signin text-sm text-ink-soft hover:text-teal-700">{t(S.nav.signIn)}</Link>}
+          {!inApp && <Link href="/signin/" className="header-signin text-sm text-ink-soft hover:text-brand-700">{t(S.nav.signIn)}</Link>}
           <Link href={inApp ? "/app/" : "/start/"} className="btn btn-primary text-sm">
             {t(inApp ? S.nav.dashboard : S.nav.getStarted)}
           </Link>

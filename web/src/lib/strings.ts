@@ -166,22 +166,44 @@ export const S = {
   },
 
   dash: {
-    hello: { en: "Assalamu alaikum", ar: "السلام عليكم" },
-    sub: {
-      en: "May your pursuit of knowledge be a means of barakah.",
-      ar: "جعل الله طلبك للعلم سببًا للبركة.",
+    // Greeting per track: "explore" learners may not be Muslim, so no religious salutation.
+    greeting: {
+      explore: {
+        hello: { en: "Welcome", ar: "أهلًا بك" },
+        sub: { en: "Explore Islam at your own pace, with clear answers from trusted sources.", ar: "اكتشف الإسلام على مهلك، بإجابات واضحة من مصادر موثوقة." },
+      },
+      "first-steps": {
+        hello: { en: "Assalamu alaikum", ar: "السلام عليكم" },
+        sub: { en: "Welcome to your first steps. One small, clear step at a time.", ar: "مرحبًا بك في خطواتك الأولى. خطوة صغيرة واضحة كل مرة." },
+      },
+      deepen: {
+        hello: { en: "Assalamu alaikum", ar: "السلام عليكم" },
+        sub: { en: "May your pursuit of knowledge be a means of barakah.", ar: "جعل الله طلبك للعلم سببًا للبركة." },
+      },
     },
+    yourTrack: { en: "Your track", ar: "مسارك" },
     today: { en: "Today's plan", ar: "خطة اليوم" },
     completed: { en: "completed", ar: "مكتمل" },
-    keepGoing: { en: "Small steps lead to lasting change.", ar: "الخطوات الصغيرة تصنع أثرًا دائمًا." },
     journey: { en: "Your learning journey", ar: "رحلتك التعليمية" },
+    level: { en: "Level", ar: "المستوى" },
+    comingSoon: { en: "Coming soon", ar: "قريبًا" },
+    locked: { en: "Finish the previous level to unlock", ar: "أكمل المستوى السابق لفتحه" },
+    prevLevel: { en: "Previous level", ar: "المستوى السابق" },
+    nextLevel: { en: "Next level", ar: "المستوى التالي" },
+    road: {
+      done: { en: "Completed", ar: "مكتمل" },
+      now: { en: "In progress", ar: "قيد التعلّم" },
+      planned: { en: "Planned", ar: "مخطّط" },
+    },
     streak: { en: "Day streak", ar: "أيام متتالية" },
-    lessonsDone: { en: "Lessons understood", ar: "دروس مفهومة" },
-    explained: { en: "Ideas explained back", ar: "أفكار شرحتها بنفسك" },
+    streakHint: {
+      en: "The number of days in a row you've learned.",
+      ar: "عدد الأيام المتتالية التي تعلّمت فيها.",
+    },
+    lessonsDone: { en: "Lessons completed", ar: "دروس مكتملة" },
     continue: { en: "Continue", ar: "تابع" },
     start: { en: "Start", ar: "ابدأ" },
     review: { en: "Review", ar: "راجع" },
-    switchTrack: { en: "Switch track", ar: "بدّل المسار" },
     guestNote: {
       en: "You're learning as a guest. Progress is saved on this device only.",
       ar: "أنت تتعلّم كزائر. يُحفظ تقدّمك على هذا الجهاز فقط.",

@@ -36,7 +36,7 @@ export default function Privacy() {
         <ul className="card mt-6 space-y-4 p-6 text-ink-soft">
           {POINTS.map((p) => (
             <li key={p.en} className="flex gap-3">
-              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
               {t(p)}
             </li>
           ))}

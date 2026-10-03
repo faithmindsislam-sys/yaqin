@@ -1,20 +1,20 @@
 // Soft painted-style scenery drawn in SVG, so it stays crisp at any size.
 // Swap for reviewed illustrations in /public/img when they are generated.
 
-export function Skyline({ className = "", tone = "teal" }: { className?: string; tone?: "teal" | "sky" }) {
-  const far = tone === "teal" ? "#bfe3e4" : "#d7e9f3";
-  const mid = tone === "teal" ? "#8ccfd1" : "#b5d6e8";
-  const near = tone === "teal" ? "#4fb2b5" : "#86b9d6";
+export function Skyline({ className = "", tone = "brand" }: { className?: string; tone?: "brand" | "sky" }) {
+  const far = tone === "brand" ? "#c3d8ef" : "#d7e9f3";
+  const mid = tone === "brand" ? "#96b9e0" : "#b5d6e8";
+  const near = tone === "brand" ? "#4f86c6" : "#86b9d6";
   return (
     <svg className={className} viewBox="0 0 1200 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
       <defs>
         <linearGradient id="sk-sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#ffffff" stopOpacity="0" />
-          <stop offset="1" stopColor="#e6f4f6" />
+          <stop offset="1" stopColor="#e8f0fa" />
         </linearGradient>
         <linearGradient id="sk-water" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#bfe6ea" />
-          <stop offset="1" stopColor="#e9f6f8" />
+          <stop offset="0" stopColor="#c4dbf2" />
+          <stop offset="1" stopColor="#edf3fb" />
         </linearGradient>
         <filter id="sk-soft">
           <feGaussianBlur stdDeviation="1.2" />

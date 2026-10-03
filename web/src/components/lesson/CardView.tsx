@@ -11,7 +11,7 @@ import { CardVisual } from "../Visuals";
 import { SourceQuote } from "../ui";
 
 const LABELS = {
-  obligatory: { key: S.lesson.obligatory, cls: "bg-teal-50 text-teal-800 border-teal-200" },
+  obligatory: { key: S.lesson.obligatory, cls: "bg-brand-50 text-brand-800 border-brand-200" },
   recommended: { key: S.lesson.recommended, cls: "bg-violet-50 text-violet-800 border-violet-200" },
   suggestion: { key: S.lesson.suggestion, cls: "bg-slate-50 text-slate-700 border-slate-200" },
 } as const;
@@ -58,7 +58,7 @@ export function CardView({ lesson, card, onAsk }: { lesson: Lesson; card: Card; 
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
         {card.sources?.some((id) => ["quran", "hadith"].includes(allSources[id]?.kind)) && (
-          <span className="rounded-full border border-teal-300 bg-teal-50 px-2.5 py-0.5 text-teal-800">📖 {t(S.lesson.revealed)}</span>
+          <span className="rounded-full border border-brand-300 bg-brand-50 px-2.5 py-0.5 text-brand-800">📖 {t(S.lesson.revealed)}</span>
         )}
         {!isQuote && <span className="rounded-full border border-[#6150ea]/30 bg-[#6150ea]/5 px-2.5 py-0.5 text-[#4a3cc9]">✦ {t(S.lesson.generated)}</span>}
       </div>

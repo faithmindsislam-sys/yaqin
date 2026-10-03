@@ -72,6 +72,8 @@ export interface Module {
   id: string;
   title: Bi;
   lessons: string[];
+  /** Upcoming lesson titles (no content yet), shown locked on the dashboard. */
+  planned?: Bi[];
 }
 
 export interface Track {

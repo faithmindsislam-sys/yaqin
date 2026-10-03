@@ -19,7 +19,7 @@ export default function Landing() {
           <div className="rise">
             <p className="eyebrow">{t(S.hero.eyebrow)}</p>
             <h1 className="hero-title font-serif text-ink">
-              {t(S.hero.title1)} <span className="text-teal-700">{t(S.hero.title2)}</span>
+              {t(S.hero.title1)} <span className="text-brand-700">{t(S.hero.title2)}</span>
             </h1>
             <p className="hero-sub">{t({
               en: "A little learning. A deeper understanding. Explore Islam through short, clear lessons in Arabic and English, with sources you can check.",
@@ -38,9 +38,9 @@ export default function Landing() {
         </section>
 
         <div className="landing-proof">
-          <span><BookOpenText className="h-4 w-4 text-teal-700" aria-hidden />{t({ en: "Sources you can trace", ar: "مصادر يمكنك تتبّعها" })}</span>
-          <span><Languages className="h-4 w-4 text-teal-700" aria-hidden />{t(S.pillars.langsSub)}</span>
-          <span><ShieldCheck className="h-4 w-4 text-teal-700" aria-hidden />{t({ en: "Your learning, your pace", ar: "تعلّمك، على مهل" })}</span>
+          <span><BookOpenText className="h-4 w-4 text-brand-700" aria-hidden />{t({ en: "Sources you can trace", ar: "مصادر يمكنك تتبّعها" })}</span>
+          <span><Languages className="h-4 w-4 text-brand-700" aria-hidden />{t(S.pillars.langsSub)}</span>
+          <span><ShieldCheck className="h-4 w-4 text-brand-700" aria-hidden />{t({ en: "Your learning, your pace", ar: "تعلّمك، على مهل" })}</span>
         </div>
 
         <section className="landing-section" id="tracks">
@@ -57,16 +57,16 @@ export default function Landing() {
               const meta = TRACK_META[track.id];
               const Icon = meta.icon;
               return (
-                <Link key={track.id} href={`/start/?track=${track.id}`} className="track-card group">
+                <Link key={track.id} href={track.id === "explore" ? "/start/explore/" : `/start/?track=${track.id}`} className="track-card group">
                   <div className="flex items-center justify-between">
                     <span className={`grid h-12 w-12 place-items-center rounded-xl ${meta.ring}`}><Icon className="h-6 w-6" aria-hidden /></span>
-                    <ArrowUpRight className="h-5 w-5 text-muted transition group-hover:text-teal-700 rtl:-scale-x-100" aria-hidden />
+                    <ArrowUpRight className="h-5 w-5 text-muted transition group-hover:text-brand-700 rtl:-scale-x-100" aria-hidden />
                   </div>
                   <h3 className="font-serif text-ink">{t(track.title)}</h3>
                   <p>{t(track.tagline)}</p>
                   <div className="track-card-bottom">
                     <span>{trackLessons(track.id).length} {t(S.library.lessons)}</span>
-                    <span className="font-medium text-teal-700">{t({ en: "Start this path", ar: "ابدأ هذا المسار" })} <span aria-hidden className="inline-block rtl:rotate-180">→</span></span>
+                    <span className="font-medium text-brand-700">{t({ en: "Start this path", ar: "ابدأ هذا المسار" })} <span aria-hidden className="inline-block rtl:rotate-180">→</span></span>
                   </div>
                 </Link>
               );

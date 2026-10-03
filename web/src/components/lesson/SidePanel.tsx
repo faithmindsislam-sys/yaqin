@@ -44,7 +44,7 @@ export function Companion({ lesson, seed }: { lesson: Lesson; seed: { q: string;
   return (
     <section className="card p-4" id="companion">
       <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-b from-teal-400 to-teal-700 text-white">
+        <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-b from-brand-400 to-brand-700 text-white">
           <Bot className="h-5 w-5" />
         </span>
         <div>
@@ -54,7 +54,7 @@ export function Companion({ lesson, seed }: { lesson: Lesson; seed: { q: string;
       </div>
       <form onSubmit={submit} className="relative mt-3">
         <input ref={input} className="input pe-11 text-sm" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t(S.lesson.companionPlaceholder)} />
-        <button className="absolute end-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-teal-700 hover:bg-teal-50 disabled:opacity-40" disabled={busy || !q.trim()} aria-label={t(S.ask.send)}>
+        <button className="absolute end-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-brand-700 hover:bg-brand-50 disabled:opacity-40" disabled={busy || !q.trim()} aria-label={t(S.ask.send)}>
           <Send className="h-4 w-4 rtl:-scale-x-100" />
         </button>
       </form>
@@ -109,7 +109,7 @@ export function Steps({ p, hasExplain, hasQuiz }: { p: LessonProgress; hasExplai
       <ul className="mt-3 space-y-2">
         {items.map((it) => (
           <li key={it.label.en} className="flex items-center gap-2.5 text-sm">
-            {it.done ? <CheckCircle2 className="h-4.5 w-4.5 text-teal-500" /> : <Circle className="h-4.5 w-4.5 text-line" />}
+            {it.done ? <CheckCircle2 className="h-4.5 w-4.5 text-brand-500" /> : <Circle className="h-4.5 w-4.5 text-line" />}
             <span className={it.done ? "text-ink" : "text-muted"}>{t(it.label)}</span>
           </li>
         ))}
