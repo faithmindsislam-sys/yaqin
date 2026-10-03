@@ -1,11 +1,13 @@
 import { PURPOSES, type PurposeId, type TopicId } from "./onboarding";
 
 const TOPICS_BY_PURPOSE: Record<PurposeId, TopicId[]> = {
-  basics: ["god", "quran", "prophet"],
+  god: ["god"],
+  prophets: ["prophet"],
+  quran: ["quran"],
   question: ["questions", "god"],
-  family: ["prayer", "ethics"],
-  exploring: ["god", "quran", "prayer"],
-  curious: ["questions", "prophet"],
+  life: ["prayer", "ethics"],
+  evidence: ["questions", "god", "quran"],
+  religions: ["beliefs"],
 };
 
 /** Alternate between selected reasons so one reason cannot fill all three slots. */
