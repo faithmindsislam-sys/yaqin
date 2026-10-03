@@ -16,7 +16,8 @@ from .config import get_settings
 from .db import get_store
 from .errors import ApiError
 
-ROLE_RANK = {"learner": 0, "instructor": 1, "reviewer": 2}
+ROLE_RANK = {"learner": 0, "teacher": 1, "admin": 2, "super_admin": 3}
+LEGACY_ROLES = {"instructor": "teacher", "reviewer": "admin"}
 
 
 @dataclass
@@ -24,6 +25,10 @@ class User:
     id: str | None
     role: str
     email: str | None = None
+
+    def __post_init__(self):
+        # Keep existing Supabase profiles working until the role migration is applied.
+        self.role = LEGACY_ROLES.get(self.role, self.role)
 
 
 ANONYMOUS = User(id=None, role="anonymous")
@@ -68,11 +73,15 @@ async def current_user(request: Request) -> User:
     return User(id=user_id, role=role or "learner", email=claims.get("email"))
 
 
+def has_role(user: User, minimum: str) -> bool:
+    return ROLE_RANK.get(user.role, -1) >= ROLE_RANK[minimum]
+
+
 def require_role(minimum: str):
     async def dep(user: User = Depends(current_user)) -> User:
         if user.role == "anonymous":
             raise ApiError(401, "unauthorized", "Sign in to continue.")
-        if ROLE_RANK.get(user.role, -1) < ROLE_RANK[minimum]:
+        if not has_role(user, minimum):
             raise ApiError(403, "forbidden", f"This needs the {minimum} role.")
         return user
 

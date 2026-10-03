@@ -1,7 +1,9 @@
 import type { AskResponse, ExplainBackResponse, Lang, TrackId, ContentBundle, Lesson, Source } from "./types";
 import { getAccessToken } from "./supabase";
+import type { Role } from "./roles";
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
+export const apiEnabled = process.env.NEXT_PUBLIC_API_ENABLED !== "false";
 
 export class ApiError extends Error {
   constructor(
@@ -14,6 +16,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, body?: unknown): Promise<T> {
+  if (!apiEnabled) throw new ApiError(503, "backend_unavailable", "This feature is currently unavailable. Please try again later.");
   const token = await getAccessToken();
   const res = await fetch(`${BASE}/api${path}`, {
     method: body === undefined ? "GET" : "POST",
@@ -60,4 +63,10 @@ export function saveDraft(lesson: unknown) { return request<{ lesson_id: string;
 export function submitDraft(id: string) { return request(`/review/${encodeURIComponent(id)}/submit`, {}); }
 export function reviewDecision(id: string, decision: "approve" | "request_changes", note: string) {
   return request(`/review/${encodeURIComponent(id)}/decision`, { decision, note });
+}
+
+export type AdminUser = { id: string; email: string | null; display_name: string | null; role: Role; created_at: string };
+export function searchUsers(q: string) { return request<AdminUser[]>(`/admin/users?q=${encodeURIComponent(q)}`); }
+export function changeUserRole(id: string, role: Role) {
+  return request<{ id: string; role: Role }>(`/admin/users/${encodeURIComponent(id)}/role`, { role });
 }

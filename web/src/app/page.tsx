@@ -50,7 +50,7 @@ export default function Landing() {
               <h2 className="font-serif text-ink">{t(S.journey.title)}</h2>
               <p>{t({ en: "Choose what feels right for you today. You can always change your path.", ar: "اختر ما يناسبك اليوم. يمكنك تغيير مسارك في أي وقت." })}</p>
             </div>
-            <ArrowLink href="/library/">{t({ en: "View all lessons", ar: "جميع الدروس" })}</ArrowLink>
+            <ArrowLink href="/library/?view=browse">{t({ en: "View all lessons", ar: "جميع الدروس" })}</ArrowLink>
           </div>
           <div className="track-grid">
             {tracks.map((track) => {

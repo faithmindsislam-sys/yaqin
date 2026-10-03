@@ -42,6 +42,8 @@ next-env.d.ts
 
 # bundled from ../content at build time
 /src/generated/
+# split from the Quran resources by scripts/bundle-quran.mjs
+/public/data/
 
 # Share the public configuration template.
 !.env.example

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import errors
 from .config import get_settings
 from .db import get_store, init_store
-from .routes import content, review, tutor
+from .routes import admin, content, review, tutor
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -35,5 +35,5 @@ async def health():
     return {"ok": True, "model": s.bedrock_model_id if s.aws_enabled else None, "db": await store.ping(), "store": store.kind}
 
 
-for r in (content.router, tutor.router, review.router):
+for r in (content.router, tutor.router, review.router, admin.router):
     app.include_router(r, prefix="/api")

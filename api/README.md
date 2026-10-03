@@ -70,3 +70,10 @@ docker run -p 8000:8000 --env-file api/.env yaqin-api
 ```
 
 Login and database configuration: [Supabase setup](../docs/SUPABASE_SETUP.md).
+
+Account fields and permissions: [account contract](../docs/CONTRACT.md#accounts-and-access).
+Roles are `learner`, `teacher`, `admin`, `super_admin`; new signups are learners.
+Apply `0004_account_roles.sql` when ready to update Supabase. Existing `instructor` and
+`reviewer` profiles still work until then. CDN-only frontend mode does not need a hosted
+FastAPI service; Supabase login remains independent. User/role/quota management and
+admin MFA are documented as the next backend work, rather than exposed before hosting.

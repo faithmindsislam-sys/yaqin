@@ -23,7 +23,7 @@ begin
   update public.profiles set preferred_track = 'explore', daily_minutes = 15 where id = me;
   if not found then raise exception 'Own profile update failed'; end if;
   begin
-    update public.profiles set role = 'reviewer' where id = me;
+    update public.profiles set role = 'super_admin' where id = me;
     raise exception 'Role escalation was permitted';
   exception when insufficient_privilege then null;
   end;

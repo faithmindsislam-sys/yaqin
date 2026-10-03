@@ -33,6 +33,8 @@ class Store(Protocol):
     async def add_review_event(self, lesson_id: str, actor_id: str | None, kind: str, payload: dict) -> None: ...
     async def log_tutor(self, tier: str, citation_ids: list[str], latency_ms: int, track: str | None) -> None: ...
     async def get_role(self, user_id: str) -> str | None: ...
+    async def search_users(self, query: str) -> list[dict]: ...
+    async def set_user_role(self, user_id: str, role: str, actor_id: str) -> None: ...
     async def content_bundle(self) -> dict: ...
     async def staff_lessons(self, user_id: str | None, reviewer: bool) -> list[dict]: ...
     async def save_draft(self, draft: dict, actor_id: str | None, reviewer: bool) -> None: ...
@@ -147,6 +149,8 @@ class MemoryStore:
         self.events: list[dict] = []
         self.logs: list[dict] = []
         self.roles: dict[str, str] = {}
+        self.users: dict[str, dict] = {}
+        self.admin_events: list[dict] = []
 
     def reload(self) -> None:
         self.tracks, self.lessons, self.sources = load_content(self.content_dir)
@@ -195,7 +199,24 @@ class MemoryStore:
         self.logs.append({"tier": tier, "citation_ids": citation_ids, "latency_ms": latency_ms, "track": track})
 
     async def get_role(self, user_id: str) -> str | None:
-        return self.roles.get(user_id, "learner")
+        return self.users[user_id]["role"] if user_id in self.users else self.roles.get(user_id, "learner")
+
+    async def search_users(self, query: str) -> list[dict]:
+        rows = [u for u in self.users.values() if query.lower() in (u.get("email") or "").lower()
+                or query.lower() in (u.get("display_name") or "").lower()]
+        return [dict(u) for u in sorted(rows, key=lambda u: (u["created_at"], u["id"]), reverse=True)[:50]]
+
+    async def set_user_role(self, user_id: str, role: str, actor_id: str) -> None:
+        from .errors import ApiError
+        if user_id not in self.users:
+            raise ApiError(404, "not_found", "User not found.")
+        old = self.users[user_id]["role"]
+        # No awaits between the update and audit append: one atomic memory operation.
+        self.users[user_id] = {**self.users[user_id], "role": role}
+        self.roles[user_id] = role
+        self.admin_events.append({"id": str(uuid.uuid4()), "actor_id": actor_id, "target_id": user_id,
+                                  "kind": "role_changed", "payload": {"from_role": old, "to_role": role},
+                                  "created_at": time.time()})
 
     async def content_bundle(self) -> dict:
         return {"tracks": self.tracks,
@@ -363,6 +384,29 @@ class PgStore:
     async def get_role(self, user_id: str) -> str | None:
         async with self.pool.acquire() as c:
             return await c.fetchval("select role from profiles where id = $1", uuid.UUID(user_id))
+
+    async def search_users(self, query: str) -> list[dict]:
+        async with self.pool.acquire() as c:
+            rows = await c.fetch(
+                "select p.id, u.email, p.display_name, p.role, p.created_at "
+                "from public.profiles p join auth.users u on u.id = p.id "
+                "where strpos(lower(coalesce(u.email, '')), lower($1)) > 0 "
+                "or strpos(lower(coalesce(p.display_name, '')), lower($1)) > 0 "
+                "order by p.created_at desc, p.id desc limit 50", query)
+        return [{**dict(r), "id": str(r["id"])} for r in rows]
+
+    async def set_user_role(self, user_id: str, role: str, actor_id: str) -> None:
+        from .errors import ApiError
+        target, actor = uuid.UUID(user_id), uuid.UUID(actor_id)
+        async with self.pool.acquire() as c:
+            async with c.transaction():
+                old = await c.fetchval("select role from public.profiles where id = $1 for update", target)
+                if old is None:
+                    raise ApiError(404, "not_found", "User not found.")
+                await c.execute("update public.profiles set role = $2 where id = $1", target, role)
+                await c.execute(
+                    "insert into public.admin_events (actor_id, target_id, kind, payload) values ($1, $2, 'role_changed', $3)",
+                    actor, target, {"from_role": old, "to_role": role})
 
     async def content_bundle(self) -> dict:
         async with self.pool.acquire() as c:

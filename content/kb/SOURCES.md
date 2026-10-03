@@ -28,3 +28,74 @@ unless noted.
 | Glossary (`dictionary`) | 0 | 38 TerminologyEnc terms (ar+en) |
 
 Re-run: `python3 content/tools/fetch_quranenc.py && python3 content/tools/fetch_hadeethenc.py && python3 content/tools/fetch_terms.py && python3 content/tools/fetch_icadb_faq.py && python3 content/validate.py`.
+
+## Quran reader recitation delivery — 3 October 2026
+
+The separate reader now uses the already acquired **human recording** of
+Mishary Alafasy (مشاري العفاسي), Hafs from Asim, mp3quran read **123**. This
+does not modify or approve the 29 KB records above. Dataset/URL/future S3 key:
+`quran/audio/alafasy-hafs-mp3quran-123`, relative to resources or the existing
+`NEXT_PUBLIC_QURAN_BASE` (default `/data`). The reader credits the reciter,
+riwaya and [mp3quran.net](https://mp3quran.net) under each available surah.
+
+Delivered: surah Listen/Pause and Restart, verse play/pause with end stopping,
+verse highlighting, Mushaf page crossing, buffering and retry, English/Arabic
+RTL controls. Download was removed at the user's request. Only surahs listed
+in the bundled recitation index get controls. Playback/navigation, missing-file
+retry and 375 px layout were checked locally; full results and file provenance
+are in [the resource inventory](../../../resources/README.md#human-quran-recitation-local-reader-delivery-3-october-2026).
+
+All 114 surahs have structurally valid timing coverage; the 230 files listed in
+metadata matched saved sizes and SHA-256. This is **not a listening check of
+timing accuracy** or a review of reuse rights. The API snapshot has no published
+terms text; permission for this reuse remains unresolved. No audio was generated
+by AI. No source review statuses were promoted.
+
+The local MP3 symlink supports HTTP Range 206. Static export was checked and
+copies the full **1,718,021,595 bytes** into `out/`; it is not a lightweight audio
+deployment. Proposed next step: omit MP3s during production export and supply
+them separately under the same existing data base/key. The deployed audio
+delivery, listening spot-check, reuse terms and S3 upload remain open; no upload
+or infrastructure changes were made.
+
+
+## Quran reader tafsir delivery — 3 October 2026
+
+The reader now imports one published commentary book, **Al-Mukhtasar fi Tafsir
+al-Quran al-Karim**, Tafsir Center for Quranic Studies, from **Quranpedia.net**:
+Arabic 2003; English 27824; French 2005; Indonesian 2006; Russian 27825; Chinese
+27827. Dataset/URL/future S3 prefixes are
+`quran/tafsir/{lang}/mukhtasar-{book_id}`. Exact official download bytes, license,
+manifest, acquisition time, SHA-256, metadata, verse records and validation
+reports are preserved separately for every edition. Downloads total 14,818,006
+bytes. Book 503 and Al-Muyassar were not used; the existing Mouaser archive stays
+unused. No verse API crawl or AI-authored tafsir was involved.
+
+All editions match 114 surahs and 6,236 ordered KFGQPC Hafs v30 verse keys with
+unique IDs. **French commentary is incomplete:** 2,827 empty entries, all of
+surahs 30–114; the reader says the source snapshot has no tafsir for those verses.
+Other five editions have zero empty entries. All six have zero grouped passages.
+Grouped handling was checked only with temporary nonreligious structural
+fixtures, restored afterward. Urdu and Spanish have no specified edition and
+show a language-unavailable message, preserving Arabic commentary when visible.
+
+Delivered: per-verse expansion, lazy surah fetches, language/display matching,
+plain text with lang/dir, loading/error/retry and accessible English/Arabic
+controls. Footer credits the book, Tafsir Center and
+[Quranpedia.net](https://quranpedia.net), with Arabic dump version 2026-08-10 and
+translation catalogue observation 2026-10-02 (translations declare no release
+version). Existing recitation remains functional.
+
+Typecheck, lint, every web check script, content validation, offline corpus
+checks and Webpack static export passed. Browser tests cover short/long text
+in all six languages, display modes, missing languages/entries, 375 px and Arabic
+interface, keyboard focus, retry, search/pickers/pagination and audio continuity.
+Full schemas, per-file inventory and test scope are in
+[the resource inventory](../../../resources/README.md#al-mukhtasar-tafsir-local-reader-delivery-3-october-2026).
+
+Every edition remains `not_scholarly_reviewed`. Quranpedia redistribution requires
+its link and dump version; the saved license retains third-party ownership of
+contemporary works/translations. Scholarly review, French gaps, Urdu/Spanish
+availability in these sources, and author/publisher reuse terms remain open.
+No existing KB record was changed or approved. No S3 upload or live deployment
+verification was performed by this tafsir task.

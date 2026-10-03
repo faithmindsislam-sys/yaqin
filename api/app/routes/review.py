@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from .. import review
-from ..auth import User, require_role
+from ..auth import User, has_role, require_role
 from ..db import get_store
 from ..errors import ApiError
 from ..lesson_model import LessonDraft
@@ -20,7 +20,7 @@ class Decision(BaseModel):
 
 
 @router.post("/check", dependencies=[Depends(limit)])
-async def check(draft: dict[str, Any], _: User = Depends(require_role("instructor"))):
+async def check(draft: dict[str, Any], _: User = Depends(require_role("teacher"))):
     if not isinstance(draft.get("cards"), list) or not all(isinstance(c, dict) for c in draft["cards"]):
         raise ApiError(400, "bad_request", "A lesson draft needs a 'cards' list of objects.")
     # An unsaved draft has no lesson row to attach a foreign-key review event to.
@@ -28,12 +28,12 @@ async def check(draft: dict[str, Any], _: User = Depends(require_role("instructo
 
 
 @router.get("/lessons")
-async def staff_lessons(user: User = Depends(require_role("instructor"))):
-    return await get_store().staff_lessons(user.id, user.role == "reviewer")
+async def staff_lessons(user: User = Depends(require_role("teacher"))):
+    return await get_store().staff_lessons(user.id, has_role(user, "admin"))
 
 
 @router.post("/drafts")
-async def save_draft(body: LessonDraft, user: User = Depends(require_role("instructor"))):
+async def save_draft(body: LessonDraft, user: User = Depends(require_role("teacher"))):
     draft = body.model_dump(exclude_none=True)
     store = get_store()
     tracks = await store.list_tracks()
@@ -43,12 +43,12 @@ async def save_draft(body: LessonDraft, user: User = Depends(require_role("instr
     sources = await store.get_sources(ids)
     if any(sid not in sources for sid in ids):
         raise ApiError(400, "bad_request", "The draft cites an unknown source.")
-    await store.save_draft(draft, user.id, user.role == "reviewer")
+    await store.save_draft(draft, user.id, has_role(user, "admin"))
     return {"lesson_id": draft["id"], "status": "draft"}
 
 
 @router.post("/{lesson_id}/submit", dependencies=[Depends(limit)])
-async def submit(lesson_id: str, user: User = Depends(require_role("instructor"))):
+async def submit(lesson_id: str, user: User = Depends(require_role("teacher"))):
     store = get_store()
     own = await store.staff_lessons(user.id, False)
     draft = next((l for l in own if l["id"] == lesson_id), None)
@@ -62,24 +62,24 @@ async def submit(lesson_id: str, user: User = Depends(require_role("instructor")
 
 
 @router.get("/queue")
-async def queue(user: User = Depends(require_role("instructor"))):
-    lessons = await get_store().staff_lessons(user.id, user.role == "reviewer")
+async def queue(user: User = Depends(require_role("teacher"))):
+    lessons = await get_store().staff_lessons(user.id, has_role(user, "admin"))
     return [l for l in lessons if l["status"] == "in_review"]
 
 
 @router.get("/sources")
-async def pending_sources(_: User = Depends(require_role("instructor"))):
+async def pending_sources(_: User = Depends(require_role("teacher"))):
     return await get_store().pending_sources()
 
 
 @router.post("/sources/{source_id}/approve")
-async def approve_source(source_id: str, user: User = Depends(require_role("reviewer"))):
+async def approve_source(source_id: str, user: User = Depends(require_role("admin"))):
     await get_store().approve_source(source_id, user.id)
     return {"source_id": source_id, "review_status": "approved"}
 
 
 @router.post("/{lesson_id}/decision", dependencies=[Depends(limit)])
-async def decide(lesson_id: str, body: Decision, user: User = Depends(require_role("reviewer"))):
+async def decide(lesson_id: str, body: Decision, user: User = Depends(require_role("admin"))):
     store = get_store()
     if body.decision == "approve":
         draft = await store.get_lesson(lesson_id, include_unpublished=True)

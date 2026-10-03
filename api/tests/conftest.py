@@ -12,6 +12,8 @@ def _settings(monkeypatch):
     monkeypatch.setenv("TUTOR_RATE_PER_MINUTE", "1000")
     for k in ("DATABASE_URL", "YAQIN_AWS_PROFILE", "SUPABASE_URL", "DEV_ROLE", "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"):
         monkeypatch.delenv(k, raising=False)
+    # Local .env may contain a real database; tests must always use memory storage.
+    monkeypatch.setenv("DATABASE_URL", "")
     from app.config import get_settings
 
     get_settings.cache_clear()

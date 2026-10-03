@@ -160,6 +160,12 @@ export function streak(days: string[]): number {
   return n;
 }
 
+/** Recommended next lesson: the first unfinished one, with "already confident" lessons moved to the end. */
+export function nextLesson<T extends { id: string }>(lessons: T[], known: string[], done: ProgressState["lessons"]): T | undefined {
+  const ordered = [...lessons.filter((l) => !known.includes(l.id)), ...lessons.filter((l) => known.includes(l.id))];
+  return ordered.find((l) => !done[l.id]?.completedAt) ?? ordered[0];
+}
+
 export function useProgress(): ProgressState {
   const uid = useStored(ACCOUNT_KEY);
   const raw = useStored(keyFor(uid));

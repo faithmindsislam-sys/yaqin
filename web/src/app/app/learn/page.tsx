@@ -8,7 +8,7 @@ import { Skyline } from "@/components/Scenery";
 import { CardVisual } from "@/components/Visuals";
 import { useContent } from "@/lib/content";
 import { useI18n } from "@/lib/i18n";
-import { streak, useProgress } from "@/lib/progress";
+import { nextLesson, streak, useProgress } from "@/lib/progress";
 import { displayName, useSession } from "@/lib/session";
 import { S } from "@/lib/strings";
 import type { Bi, Lesson } from "@/lib/types";
@@ -31,11 +31,7 @@ function DashboardBody() {
   // Levels = the track's modules, in order.
   const levels = (getTrack(trackId)?.modules ?? []).map((m) => ({ ...m, items: m.lessons.map(getLesson).filter((l): l is Lesson => !!l) }));
 
-  // Next lesson: first unfinished one, with "already confident" lessons moved to the end.
-  const current = useMemo(() => {
-    const ordered = [...lessons.filter((l) => !prefs.known.includes(l.id)), ...lessons.filter((l) => prefs.known.includes(l.id))];
-    return ordered.find((l) => !progress.lessons[l.id]?.completedAt) ?? ordered[0];
-  }, [lessons, prefs.known, progress.lessons]);
+  const current = useMemo(() => nextLesson(lessons, prefs.known, progress.lessons), [lessons, prefs.known, progress.lessons]);
 
   const cp = current ? progress.lessons[current.id] : undefined;
   const plan = current

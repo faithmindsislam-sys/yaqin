@@ -3,15 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "content": "node scripts/bundle-content.mjs",
-    "predev": "node scripts/bundle-content.mjs",
+    "content": "node scripts/bundle-content.mjs && node scripts/bundle-quran.mjs",
+    "predev": "node scripts/bundle-content.mjs && node scripts/bundle-quran.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/bundle-content.mjs",
+    "prebuild": "node scripts/bundle-content.mjs && node scripts/bundle-quran.mjs",
     "build": "next build",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "check:progress": "node scripts/check-progress.mjs",
-    "check:onboarding": "node scripts/check-onboarding.mjs"
+    "check:onboarding": "node scripts/check-onboarding.mjs",
+    "check:auth": "node scripts/check-auth.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

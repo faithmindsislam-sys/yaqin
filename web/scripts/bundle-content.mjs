@@ -1,11 +1,11 @@
-// Bundles ../content (lessons, sources, tracks) into one JSON the static site imports.
+// Keep the saved content snapshot outside JavaScript, so lesson scripture is fetched as data.
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const contentDir = join(here, "..", "..", "content");
-const outFile = join(here, "..", "src", "generated", "content.json");
+const outFile = join(here, "..", "public", "data", "content.json");
 
 const readJson = (p) => JSON.parse(readFileSync(p, "utf8"));
 const jsonFiles = (dir) =>

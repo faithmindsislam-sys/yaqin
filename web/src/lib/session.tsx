@@ -6,8 +6,9 @@ import { readStored, useIsClient, useStored, writeStored } from "./store";
 import { supabase } from "./supabase";
 import { activateAccount, hydrateFromRemote, ACCOUNT_KEY, PROGRESS_ERROR } from "./progress";
 import type { TrackId } from "./types";
+import { normalizeRole, type Role } from "./roles";
 
-export type Role = "learner" | "instructor" | "reviewer";
+export type { Role } from "./roles";
 export type Prefs = { track: TrackId | null; minutes: number; onboarded: boolean; known: string[] };
 type Session = {
   ready: boolean; user: User | null; guest: boolean; role: Role; prefs: Prefs; authAvailable: boolean;
@@ -100,7 +101,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       // Honor the signup email language before importing guest preferences.
       const accountLanguage = user.user_metadata?.lang;
       if (!pending && (remote.onboarded || accountLanguage === "en" || accountLanguage === "ar")) writeStored("yaqin.lang", data.lang);
-      setProfile({ uid, role: data.role as Role });
+      setProfile({ uid, role: normalizeRole(data.role) });
       writeStored(PROFILE_ERROR, null);
       if (pending || (!remote.onboarded && guestPrefs.onboarded)) {
         writeStored(pendingKey(uid), "1");

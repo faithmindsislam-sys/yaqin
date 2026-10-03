@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { AlertTriangle, BookCheck, CheckCircle2, ClipboardCheck, FileClock, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { SourceQuote } from "@/components/ui";
-import { reviewCheck, staffLessons, pendingSources, approveSource, saveDraft, submitDraft, reviewDecision } from "@/lib/api";
+import { apiEnabled, reviewCheck, staffLessons, pendingSources, approveSource, saveDraft, submitDraft, reviewDecision } from "@/lib/api";
 import { useContent } from "@/lib/content";
 import type { Lesson, Source } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { S } from "@/lib/strings";
+import { canReview, isStaff } from "@/lib/roles";
 
 type Issue = { card?: string | null; severity: string; issue: string; suggestion?: string; origin?: string };
 type CheckResult = { ready_for_reviewer?: boolean; checks?: Record<string, unknown>; issues?: Issue[] };
@@ -38,12 +40,12 @@ function Workspace() {
   const [preview, setPreview] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (role === "learner") return;
+    if (!isStaff(role) || !user || !apiEnabled) return;
     try {
       const [rows, sources] = await Promise.all([staffLessons(), pendingSources()]);
       setStaff(rows); setPending(sources);
     } catch (e) { setError(e instanceof Error ? e.message : t(S.ask.error)); }
-  }, [role, t]);
+  }, [role, user, t]);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- Reads the staff API; updates happen after its promise resolves.
   useEffect(() => { void load(); }, [load]);
 
@@ -74,13 +76,15 @@ function Workspace() {
     }
   }
 
-  if (role === "learner") return <p className="card p-6">{t(S.instructor.restricted)}</p>;
+  if (!isStaff(role) || !user) return <p className="card p-6">{t(S.instructor.restricted)}</p>;
+  if (!apiEnabled) return <p className="card p-6">{t({ en: "Course editing will be available soon. You can browse published lessons in the library.", ar: "سيُتاح تحرير الدورات قريبًا. يمكنك تصفّح الدروس المنشورة في المكتبة." })}</p>;
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="font-serif text-4xl text-ink">{t(S.instructor.title)}</h1>
         <p className="mt-1 text-ink-soft">{t(S.instructor.sub)}</p>
+        {role === "super_admin" && <Link href="/studio/users/" className="btn btn-ghost mt-3">{t(S.users.title)}</Link>}
       </header>
 
       {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -93,7 +97,7 @@ function Workspace() {
           <div className="flex flex-wrap gap-2">
             {lesson.status !== "published" && <button className="btn btn-ghost" disabled={busy} onClick={() => setDraft(JSON.stringify(lesson, null, 2))}>{t({ en: "Edit", ar: "تحرير" })}</button>}
             {lesson.status === "draft" && lesson.author_id === user?.id && <button className="btn btn-primary" disabled={busy} onClick={() => void action(() => submitDraft(lesson.id), t({ en: "Submitted for review.", ar: "أُرسل للمراجعة." }))}>{t({ en: "Submit for review", ar: "إرسال للمراجعة" })}</button>}
-            {role === "reviewer" && lesson.status === "in_review" && <>
+            {canReview(role) && lesson.status === "in_review" && <>
               <button className="btn btn-primary" disabled={busy} onClick={() => void action(() => reviewDecision(lesson.id, "approve", note), t({ en: "Lesson published.", ar: "نُشر الدرس." }))}>{t({ en: "Approve and publish", ar: "اعتماد ونشر" })}</button>
               <button className="btn btn-ghost" disabled={busy} onClick={() => void action(() => reviewDecision(lesson.id, "request_changes", note), t({ en: "Changes requested.", ar: "طُلبت تعديلات." }))}>{t({ en: "Request changes", ar: "طلب تعديلات" })}</button>
             </>}
@@ -122,7 +126,7 @@ function Workspace() {
                   </span>
                   <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs text-amber-800">pending</span>
                 </button>
-                {role === "reviewer" && preview === s.id && <button className="btn btn-primary mt-3" disabled={busy} onClick={() => void action(() => approveSource(s.id), t({ en: "Source approved.", ar: "اعتُمد المصدر." }))}>{t({ en: "Approve verified source", ar: "اعتماد المصدر بعد التحقق" })}</button>}
+                {canReview(role) && preview === s.id && <button className="btn btn-primary mt-3" disabled={busy} onClick={() => void action(() => approveSource(s.id), t({ en: "Source approved.", ar: "اعتُمد المصدر." }))}>{t({ en: "Approve verified source", ar: "اعتماد المصدر بعد التحقق" })}</button>}
                 {preview === s.id && (
                   <div className="mt-3">
                     <SourceQuote id={s.id} source={s} compact />

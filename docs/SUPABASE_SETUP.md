@@ -12,7 +12,7 @@ Never put database passwords, Supabase secret/service-role keys, Google secrets 
 
 ## Database
 
-On a new project apply `supabase/migrations/0001_init.sql`, `0002_complete_backend.sql`, `0002_source_extra.sql`, and `0003_auth_language.sql` in order. On an existing project apply only missing migrations, once each. `0002_complete_backend.sql` backfills account profiles and protects role changes; `0002_source_extra.sql` preserves source metadata such as scholarly explanations and recitation details; `0003_auth_language.sql` preserves signup language and synchronizes profile language to auth email metadata.
+On a new project apply `supabase/migrations/0001_init.sql`, `0002_complete_backend.sql`, `0002_source_extra.sql`, `0003_auth_language.sql`, and `0004_account_roles.sql` in order. On an existing project apply only missing migrations, once each. `0002_complete_backend.sql` backfills account profiles and protects role changes; `0002_source_extra.sql` preserves source metadata such as scholarly explanations and recitation details; `0003_auth_language.sql` preserves signup language and synchronizes profile language to auth email metadata; `0004_account_roles.sql` migrates `instructor` to `teacher` and `reviewer` to `admin`, adds `super_admin`, and updates staff read policies without allowing browser role/content writes.
 
 After configuring the API environment, seed from `api/`:
 
@@ -30,9 +30,17 @@ Copy `web/.env.example` to `web/.env.local` and replace placeholders:
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLIC_PUBLISHABLE_KEY
 NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000
+NEXT_PUBLIC_API_ENABLED=true
 ```
 
 A legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` also works. Restart development after changes. Static production builds require these variables at **build time**; rebuild and redeploy. Leave API_BASE empty when the host routes `/api/*` to FastAPI; otherwise set the backend origin, without `/api`.
+
+Before the backend is hosted, set `NEXT_PUBLIC_API_ENABLED=false` and build the static
+site. It uses the published `/data/content.json` CDN snapshot without API requests or
+a live-content warning. Supabase signup/login and learner sync work independently.
+Course editing and AI requests remain unavailable until the API is enabled. The existing
+snapshot fallback also handles a live API outage. Set the flag to `true` after hosting.
+Login, auth callbacks and password recovery remain accessible during content outages.
 
 ## API environment
 
@@ -88,20 +96,30 @@ The actual live configuration and future `yaqin.org` DNS records are recorded in
 New profiles default to learner. Promote a trusted account through the Supabase SQL editor:
 
 ```sql
-update public.profiles set role = 'reviewer' where id = 'YOUR_REVIEWER_AUTH_USER_UUID';
--- Or role = 'instructor' for lesson authors.
+update public.profiles set role = 'teacher' where id = 'YOUR_TEACHER_AUTH_USER_UUID';
+-- Content reviewers/publishers: role = 'admin'.
+-- Platform owner: role = 'super_admin' (future user/role/quota tools).
 ```
 
-Browser clients cannot change their role. Reviewers approve verified sources in Instructor, then publish submitted lessons.
+Browser clients cannot change their role, and signup metadata never grants staff access.
+Teachers create and submit their own drafts in `/studio/`. Admins and super admins
+approve verified sources and publish submitted lessons. `/instructor/` remains available
+for existing links. Authentication fields stay in Supabase Auth; profiles hold the role,
+display name and learner preferences. See [the account contract](CONTRACT.md#accounts-and-access)
+for the fields, permissions and work deferred until backend hosting. Subdomains are not
+configured by this migration. A future role-management endpoint must require
+`super_admin` server-side and record every change; admins cannot grant themselves access.
 
 ## Verify the real project
 
 `GET /api/health` must show `store: "postgres"` and `db: true`.
 
-Check signup → confirmation → login; Google login; logout/login; forgot password → recovery form → login with the new password. Complete a lesson as a guest, sign up, and verify progress on another device. Check two users cannot access each other's progress or change roles. Save and submit an instructor draft, approve sources as a reviewer, publish it, and verify it appears without a frontend rebuild.
+Check signup → confirmation → login; Google login; logout/login; forgot password → recovery form → login with the new password. Complete a lesson as a guest, sign up, and verify progress on another device. Check two users cannot access each other's progress or change roles. Save and submit a teacher draft, approve sources as an admin, publish it, and verify it appears without a frontend rebuild.
 
 `supabase/tests/backend_rls.sql` provides transactional checks of ownership, role protection and progress merging; its test data is rolled back.
+`supabase/tests/account_roles.sql` checks signup defaults, staff draft visibility and
+browser write protection for all four roles after the role migration; it also rolls back.
 
 Local checks do not verify live credentials, Google consent settings, redirect URLs or SMTP delivery.
 
-Local validation: `rtk proxy .venv/bin/python -m pytest -q` in api; `rtk npm run check:progress`, `rtk npm run lint`, and `rtk proxy npm run build -- --webpack` in web.
+Local validation: `rtk proxy .venv/bin/python -m pytest -q` in api; `rtk npm run check:auth`, `rtk npm run check:progress`, `rtk npm run lint`, and `rtk proxy npm run build -- --webpack` in web.

@@ -3,20 +3,23 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ClipboardCheck, Compass, Home, LibraryBig, LogOut, MessagesSquare } from "lucide-react";
+import { BookOpenText, ClipboardCheck, Compass, Home, LibraryBig, LogOut, MessagesSquare, Scale } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { displayName, useSession } from "@/lib/session";
 import { S } from "@/lib/strings";
 import { Logo } from "./Logo";
 import { LangToggle, TRACK_META } from "./ui";
 import { useContent } from "@/lib/content";
+import { isStaff } from "@/lib/roles";
 
 const NAV = [
   { href: "/app/", icon: Compass, label: { en: "Choose track", ar: "اختر مسارك" } },
   { href: "/app/learn/", icon: Home, label: S.nav.dashboard },
   { href: "/library/", icon: LibraryBig, label: S.nav.library },
+  { href: "/quran/", icon: BookOpenText, label: S.nav.quran, short: S.nav.quranShort },
+  { href: "/compare/", icon: Scale, label: S.nav.compare, short: S.nav.compareShort },
   { href: "/ask/", icon: MessagesSquare, label: S.nav.ask },
-  { href: "/instructor/", icon: ClipboardCheck, label: S.nav.instructor, staff: true },
+  { href: "/studio/", icon: ClipboardCheck, label: S.nav.instructor, staff: true },
 ];
 
 /** Signed-in (or guest) application frame: sidebar on desktop, bottom bar on mobile. */
@@ -34,7 +37,7 @@ export function AppShell({ children, requireSession = true }: { children: React.
   }, [ready, requireSession, user, guest, router]);
 
 
-  const items = NAV.filter((n) => !n.staff || role !== "learner");
+  const items = NAV.filter((n) => !n.staff || isStaff(role));
   const name = displayName(user);
 
   return (
@@ -61,7 +64,7 @@ export function AppShell({ children, requireSession = true }: { children: React.
                   active ? "bg-brand-50 font-semibold text-brand-700" : "text-ink-soft hover:bg-sky-50"
                 }`}
               >
-                <Icon className="h-[1.1rem] w-[1.1rem]" />
+                <Icon className="h-[1.1rem] w-[1.1rem] shrink-0" />
                 {t(label)}
               </Link>
             );
@@ -71,7 +74,7 @@ export function AppShell({ children, requireSession = true }: { children: React.
         <div className="mt-4 flex items-center justify-between gap-2 px-1">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-ink">{name ?? (guest ? (t({ en: "Guest", ar: "زائر" })) : "")}</p>
-            <p className="text-xs text-muted capitalize">{role}</p>
+            <p className="text-xs text-muted capitalize">{role.replaceAll("_", " ")}</p>
           </div>
           <button onClick={() => signOut().then(() => router.push("/"))} className="rounded-lg p-2 text-muted hover:bg-sky-50 hover:text-ink" title={t(S.nav.signOut)}>
             <LogOut className="h-4 w-4 rtl:rotate-180" />
@@ -97,10 +100,10 @@ export function AppShell({ children, requireSession = true }: { children: React.
       </div>
 
       <nav aria-label={t({ en: "Learning navigation", ar: "التنقل في التعلّم" })} className="fixed inset-x-0 bottom-0 z-40 grid border-t border-line bg-white/95 backdrop-blur lg:hidden" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)`, paddingBottom: "env(safe-area-inset-bottom)" }}>
-        {items.map(({ href, icon: Icon, label }) => (
-          <Link key={href} href={href} aria-current={(href === "/app/" ? pathname === "/app/" : pathname?.startsWith(href.replace(/\/$/, ""))) ? "page" : undefined} className={`flex flex-col items-center gap-1 py-2.5 text-[0.7rem] ${(href === "/app/" ? pathname === "/app/" : pathname?.startsWith(href.replace(/\/$/, ""))) ? "text-brand-700" : "text-muted"}`}>
+        {items.map(({ href, icon: Icon, label, short }) => (
+          <Link key={href} href={href} aria-current={(href === "/app/" ? pathname === "/app/" : pathname?.startsWith(href.replace(/\/$/, ""))) ? "page" : undefined} className={`flex flex-col items-center gap-1 px-0.5 py-2.5 text-center text-[0.7rem] leading-tight ${(href === "/app/" ? pathname === "/app/" : pathname?.startsWith(href.replace(/\/$/, ""))) ? "text-brand-700" : "text-muted"}`}>
             <Icon className="h-5 w-5" />
-            {t(label)}
+            {t(short ?? label)}
           </Link>
         ))}
       </nav>

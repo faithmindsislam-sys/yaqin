@@ -14,6 +14,56 @@ Supabase Auth issues JWTs; the browser sends them as `Authorization: Bearer <jwt
 Guests use the app without an account; their progress lives in localStorage.
 ```
 
+## Accounts and access
+
+Supabase Auth owns `id`, email, password/provider credentials and email verification.
+`profiles` owns `display_name`, `role`, `created_at` and the existing learning preferences
+(`preferred_track`, `lang`, `daily_minutes`, `onboarded`, `known_lessons`). Do not duplicate
+passwords or authentication tokens in profiles. Every signup is a `learner`; signup
+metadata cannot grant a staff role.
+
+| Role | Allowed work |
+|---|---|
+| `learner` | Published content and their own profile/progress |
+| `teacher` | Learner access, create/edit their own unpublished lessons, submit for review |
+| `admin` | Teacher access, all lesson drafts, source approval and publication |
+| `super_admin` | Admin access; search users and change other users' roles in Studio |
+
+For protected requests, the API verifies Supabase JWTs and reads the role from `profiles`.
+Staff sign up as normal learners, then a super admin promotes them at `/studio/users/`.
+No invitation emails are sent. Staff roles are assigned through trusted server/SQL access; browser clients
+cannot change roles or write content directly. Only the author can submit a draft;
+admins approve sources and publish after validation. Unknown roles cannot access staff
+endpoints. Legacy `instructor`/`reviewer` profiles resolve to `teacher`/`admin` until
+migration `0004_account_roles.sql` is applied. `/studio/` is the shared staff entrance;
+`/instructor/` remains accessible for existing links. Subdomain routing is a hosting step.
+
+Before hosting the API, set `NEXT_PUBLIC_API_ENABLED=false` at frontend build time.
+The site reads its published `/data/content.json` snapshot from the static host/CDN
+without calling FastAPI. Supabase login and profile/progress sync still work independently
+when configured. Studio mutations and AI requests are unavailable in this mode.
+After hosting, set it to `true` and configure `NEXT_PUBLIC_API_BASE` (or same-origin `/api`).
+If the live content service fails, the saved snapshot remains available.
+Refreshes retain the latest successful live lessons. Invalid snapshots are rejected;
+sign-in, auth callbacks and password recovery render even if content is unavailable.
+
+Apply `0004_account_roles.sql` before `0005_admin_users.sql`; the latter checks the
+role constraint and staff policy prerequisite. The API database connection must be
+able to read `auth.users` for email search. `admin_events` records each role change
+in the same transaction as the profile update, with no browser access.
+
+After those migrations, bootstrap the first super admin through trusted SQL using
+the UUID of an existing, normally registered account:
+
+```sql
+update public.profiles set role = 'super_admin'
+where id = 'YOUR_AUTH_USER_UUID';
+```
+
+Further promotions go through Studio. Self-role changes are refused. Quota tools,
+admin MFA enrollment/enforcement, and the `app`/`studio` subdomain routes and exact
+auth redirects remain deferred.
+
 ## Safety invariants (enforced in code, not only in prompts)
 
 1. **Revealed text is never model-generated.** Qur'an and hadith text shown to the
@@ -151,9 +201,11 @@ All bodies are JSON. `lang` is `"en" | "ar"`. Auth header optional unless noted.
 | GET  | `/api/sources/{id}` | One source |
 | POST | `/api/tutor/ask` | Ask & Check tutor (below) |
 | POST | `/api/tutor/explain-back` | Grade a learner's explanation (below) |
-| POST | `/api/review/check` | Pre-review of a lesson draft (instructor role): `{ready_for_reviewer, checks, issues: [{card, severity, issue, suggestion, origin: "rule"\|"ai"}]}` |
-| GET  | `/api/review/queue` | Lessons in review (instructor role) |
-| POST | `/api/review/{lesson_id}/decision` | `{decision: "approve"|"request_changes", note}` (reviewer role) |
+| POST | `/api/review/check` | Pre-review of a lesson draft (teacher or higher): `{ready_for_reviewer, checks, issues: [{card, severity, issue, suggestion, origin: "rule"\|"ai"}]}` |
+| GET  | `/api/review/queue` | Own lessons in review for teachers; all for admins |
+| POST | `/api/review/{lesson_id}/decision` | `{decision: "approve"|"request_changes", note}` (admin or super admin) |
+| GET | `/api/admin/users?q=` | Super admin only; case-insensitive email/display-name substring search, newest first, max 50; returns `[{id, email, display_name, role, created_at}]`. Empty `q` lists the newest users. |
+| POST | `/api/admin/users/{id}/role` | Super admin only; `{role: "learner"|"teacher"|"admin"|"super_admin"}` → `{id, role}`. Self-change: 403; invalid role/id: 400; missing profile: 404. Requires a real session; updates role and audit atomically. |
 
 ### `POST /api/tutor/ask`
 
@@ -207,18 +259,22 @@ model failure; it returns `tier: "NONE"` with an apology block instead.
 Migration `0002_source_extra.sql` adds `sources.extra jsonb` for the kind-specific source fields above;
 the API reads it when present and `scripts/seed.py` refuses to run until it is applied.
 
-Tables: `profiles(id uuid pk → auth.users, display_name, role: learner|instructor|reviewer, preferred_track, lang)`,
+Tables: `profiles(id uuid pk → auth.users, display_name, role: learner|teacher|admin|super_admin, preferred_track, lang, created_at, daily_minutes, onboarded, known_lessons)`,
 `app_config(key, data jsonb)` (holds `tracks`),
 `sources`, `source_chunks(id, source_id, lesson_id, lang, content, embedding vector(1024), tsv)`,
 `lessons(id, track, module, status, data jsonb, author_id, updated_at)`,
 `progress(user_id, lesson_id, card_index, completed_at, quiz_score, explain_back_score)`,
 `review_events(id, lesson_id, actor_id, kind, payload jsonb, created_at)`,
+`admin_events(id uuid pk, actor_id uuid → auth.users, target_id uuid → auth.users, kind, payload jsonb, created_at)`
+(kind `role_changed`, payload `{from_role, to_role}`; deleting an auth user nulls its audit reference),
 `tutor_logs(id, created_at, tier, citation_ids text[], latency_ms, track)`.
 
 RLS: learners read published lessons and approved/pending sources, and read/write
-only their own `progress` and `profiles`. Instructors manage their own drafts.
-Reviewers read all lessons and write review decisions. `tutor_logs` is insert-only
+only their own `progress` and `profiles`. Teachers manage their own drafts through the API.
+Admins and super admins read all lessons and write review decisions through the API. `tutor_logs` is insert-only
 from the API service role.
+`admin_events` has RLS enabled and no client policies or client grants; only trusted
+server/SQL access can read or write it.
 
 ## Environment
 
@@ -231,7 +287,7 @@ Auth: Supabase signs user JWTs with ES256. The API verifies them against
 `{SUPABASE_URL}/auth/v1/.well-known/jwks.json` (cached), audience `authenticated`,
 issuer `{SUPABASE_URL}/auth/v1`. Secrets live outside the repo (`~/.config/yaqin/`).
 
-`web/.env.local`: `NEXT_PUBLIC_API_BASE` (empty = same origin `/api`),
+`web/.env.local`: `NEXT_PUBLIC_API_ENABLED` (`false` = CDN-only; defaults to enabled), `NEXT_PUBLIC_API_BASE` (empty = same origin `/api`),
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
 
 ## Completed workflows
@@ -239,11 +295,11 @@ issuer `{SUPABASE_URL}/auth/v1`. Secrets live outside the repo (`~/.config/yaqin
 See `SUPABASE_SETUP.md`; apply the missing migrations in the documented order.
 
 - `GET /api/content`: live `{tracks, lessons, sources}`; published lessons only, no-store.
-- `GET /api/review/lessons`: own lessons for instructors, all for reviewers.
+- `GET /api/review/lessons`: own lessons for teachers, all for admins and super admins.
 - `POST /api/review/drafts`: validated lesson JSON; saves an unpublished draft with ownership checks.
 - `POST /api/review/{id}/submit`: author submits a saved draft after checks.
 - `GET /api/review/sources`: pending sources for staff.
-- `POST /api/review/sources/{id}/approve`: reviewer approval with an audit record.
+- `POST /api/review/sources/{id}/approve`: admin or super-admin approval with an audit record.
 - Publishing requires an in-review lesson and every cited source approved.
 - Progress uses the `save_learning_progress` Supabase RPC with RLS and an atomic merge.
   Notes/card completion are in `progress`; streak dates are in `learning_days`.

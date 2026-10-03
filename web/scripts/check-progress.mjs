@@ -70,4 +70,13 @@ assert.equal(rows.has("bob/wudu"), false);
 p.activateAccount("alice");
 await p.hydrateFromRemote();
 assert.equal(JSON.parse(store.readStored("yaqin.progress.alice")).notes.wudu, "Changed while offline");
-console.log("Guest import, offline retry, progress merge, note persistence and account isolation passed.");
+
+// Recommended next lesson: track order, known lessons last, first lesson again when all are complete.
+const path = [{ id: "a" }, { id: "b" }, { id: "c" }];
+const done = { completedAt: "2026-01-02T00:00:00Z" };
+assert.equal(p.nextLesson(path, [], {}).id, "a");
+assert.equal(p.nextLesson(path, [], { a: done, b: { completedAt: null } }).id, "b");
+assert.equal(p.nextLesson(path, ["a"], {}).id, "b");
+assert.equal(p.nextLesson(path, [], { a: done, b: done, c: done }).id, "a");
+assert.equal(p.nextLesson([], [], {}), undefined);
+console.log("Guest import, offline retry, progress merge, note persistence, account isolation and next lesson passed.");

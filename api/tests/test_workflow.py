@@ -1,4 +1,5 @@
 import copy
+import pytest
 
 from app.auth import User, current_user
 from app.db import get_store
@@ -20,20 +21,21 @@ def draft():
                  "body": {"en": "Start with the face", "ar": "ابدأ بالوجه"}, "sources": ["quran:5:6"]}]}
 
 
-def test_author_review_publish_workflow_updates_live_content(client, fake_llm):
+@pytest.mark.parametrize("admin_role", ["admin", "super_admin"])
+def test_author_review_publish_workflow_updates_live_content(client, fake_llm, admin_role):
     fake_llm()
     try:
-        as_user("instructor")
+        as_user("teacher")
         assert client.post("/api/review/drafts", json=draft()).status_code == 200
         assert client.get("/api/lessons/new-lesson").status_code == 200
-        as_user("instructor", OTHER)
+        as_user("teacher", OTHER)
         assert client.get("/api/lessons/new-lesson").status_code == 404
         assert client.post("/api/review/drafts", json=draft()).status_code == 403
         assert client.post("/api/review/new-lesson/submit", json={}).status_code == 403
-        as_user("instructor")
+        as_user("teacher")
         assert client.post("/api/review/new-lesson/submit", json={}).status_code == 200
         assert client.post("/api/review/new-lesson/decision", json={"decision": "approve"}).status_code == 403
-        as_user("reviewer", OTHER)
+        as_user(admin_role, OTHER)
         assert client.post("/api/review/new-lesson/decision", json={"decision": "approve"}).status_code == 200
         body = client.get("/api/content").json()
         assert body["lessons"]["new-lesson"]["status"] == "published"
@@ -95,7 +97,7 @@ def test_production_requires_persistent_storage(client, monkeypatch):
     from app.config import get_settings
     from app.db import init_store
     monkeypatch.setenv("ENV", "prod")
-    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setenv("DATABASE_URL", "")
     get_settings.cache_clear()
     with pytest.raises(RuntimeError, match="Production requires"):
         asyncio.run(init_store())
