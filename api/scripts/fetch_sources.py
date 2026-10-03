@@ -40,7 +40,9 @@ COLLECTIONS = {
 # running number, so Muslim lookups go through the full edition.
 INDEXED_BY_ARABIC_NUMBER = {"muslim"}
 CACHE = Path.home() / ".cache" / "yaqin" / "hadith"
-_REPEAT_CHAIN = re.compile(r"(narrated|transmitted) (by|through|on the authority of) (another|other|a different) chains?", re.I)
+_REPEAT_CHAIN = re.compile(
+    r"(narrated|transmitted) (by|through|on the authority of) (another|other|a different) chains?", re.I
+)
 
 _TAG = re.compile(r"<sup[^>]*>.*?</sup>|<[^>]+>", re.S)
 
@@ -129,8 +131,7 @@ class Fetcher:
         base, letter = re.fullmatch(r"(\d+)([a-z]?)", number).groups()
         ar = {h["hadithnumber"]: h for h in self._edition(f"ara-{collection}")}
         candidates = [
-            h for h in self._edition(f"eng-{collection}")
-            if str(h.get("arabicnumber", "")).split(".")[0] == base
+            h for h in self._edition(f"eng-{collection}") if str(h.get("arabicnumber", "")).split(".")[0] == base
         ]
         candidates.sort(key=lambda h: h["hadithnumber"])
         if letter:
@@ -167,8 +168,13 @@ class Fetcher:
             ar, en = self._by_arabic_number(collection, number)
         else:
             ar, en = self._by_file(collection, number)
-        grades = sorted({f"{g['grade']} ({g['name']})" if g.get("name") else g["grade"]
-                         for g in (en.get("grades") or []) + (ar.get("grades") or []) if g.get("grade")})
+        grades = sorted(
+            {
+                f"{g['grade']} ({g['name']})" if g.get("name") else g["grade"]
+                for g in (en.get("grades") or []) + (ar.get("grades") or [])
+                if g.get("grade")
+            }
+        )
         grading = "; ".join(grades) if grades else meta["grading"]
         ref = en.get("reference") or {}
         record = {

@@ -144,7 +144,7 @@ app's `hadith.json` remains its curated projection, linked by provider ID.
 }
 ```
 
-Retrieval chunks (`source_chunks`) are built by `app.db.source_passages`: one per
+Retrieval chunks (`source_chunks`) are built by `app.domain.sources.source_passages`: one per
 language with the reference (and the question/term/title) prepended, plus a
 separate, labelled chunk for a hadith's explanation and benefits. Every chunk
 resolves to its source id, so a commentary hit cites the hadith it explains.
@@ -348,7 +348,7 @@ server/SQL access can read or write it.
 
 Auth: Supabase signs user JWTs with ES256. The API verifies them against
 `{SUPABASE_URL}/auth/v1/.well-known/jwks.json` (cached), audience `authenticated`,
-issuer `{SUPABASE_URL}/auth/v1`. Secrets live outside the repo (`~/.config/yaqin/`).
+issuer `{SUPABASE_URL}/auth/v1`. Private backend settings live in the ignored `api/.env`; production injects deployment secrets through ECS and Secrets Manager.
 
 `web/.env.local`: `NEXT_PUBLIC_API_ENABLED` (`false` = CDN-only; defaults to enabled), `NEXT_PUBLIC_API_BASE` (empty = same origin `/api`),
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY`).

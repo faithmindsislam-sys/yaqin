@@ -1,7 +1,7 @@
 """Load content/ JSON into Postgres and build the retrieval index. Idempotent.
 
-    python -m scripts.seed                 # sources, lessons, tracks, chunks (+ embeddings if AWS is configured)
-    python -m scripts.seed --no-embed      # keyword index only
+python -m scripts.seed                 # sources, lessons, tracks, chunks (+ embeddings if AWS is configured)
+python -m scripts.seed --no-embed      # keyword index only
 """
 
 from __future__ import annotations
@@ -11,9 +11,11 @@ import asyncio
 import json
 import sys
 
-from app import embeddings
-from app.config import get_settings
-from app.db import CORE_SOURCE_FIELDS, card_docs, load_content, source_extra, source_passages
+from app.configuration.settings import get_settings
+from app.domain.lessons import card_docs
+from app.domain.sources import CORE_SOURCE_FIELDS, source_extra, source_passages
+from app.gateways.bedrock.embedding_gateway import BedrockEmbeddingGateway
+from app.repositories.content_files import load_content
 
 SOURCE_COLS = CORE_SOURCE_FIELDS
 MAX_CHUNK = 1800  # characters; long Q&A answers are split so each embedding stays focused
@@ -48,8 +50,10 @@ def source_chunks(src: dict) -> list[dict]:
 
 def lesson_chunks(lesson: dict) -> list[dict]:
     """Reviewed card prose, linked to the card's first source (or the lesson's) so a hit resolves to citable text."""
-    return [{"id": doc_id, "source_id": ids[0], "lesson_id": lesson["id"], "lang": "mixed", "content": text}
-            for doc_id, text, ids in card_docs(lesson)]
+    return [
+        {"id": doc_id, "source_id": ids[0], "lesson_id": lesson["id"], "lang": "mixed", "content": text}
+        for doc_id, text, ids in card_docs(lesson)
+    ]
 
 
 async def main(argv: list[str] | None = None) -> int:
@@ -65,14 +69,18 @@ async def main(argv: list[str] | None = None) -> int:
         return 2
     tracks, lessons, sources = load_content(s.content_dir)
     embed = not args.no_embed and s.aws_enabled
-    print(f"{len(sources)} sources, {len(lessons)} lessons, {len(tracks)} tracks; embeddings: {'on' if embed else 'off'}")
+    print(
+        f"{len(sources)} sources, {len(lessons)} lessons, {len(tracks)} tracks; embeddings: {'on' if embed else 'off'}"
+    )
 
+    embeddings = BedrockEmbeddingGateway(s)
     conn = await asyncpg.connect(s.database_url, statement_cache_size=0)
-    await conn.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
     try:
+        await conn.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
         has_extra = await conn.fetchval(
             "select exists (select 1 from information_schema.columns "
-            "where table_schema = 'public' and table_name = 'sources' and column_name = 'extra')")
+            "where table_schema = 'public' and table_name = 'sources' and column_name = 'extra')"
+        )
         if not has_extra:
             print("sources.extra is missing: apply supabase/migrations/0002_source_extra.sql first", file=sys.stderr)
             return 1
@@ -85,11 +93,14 @@ async def main(argv: list[str] | None = None) -> int:
             await conn.executemany(
                 "insert into lessons (id, track, module, status, data) values ($1, $2, $3, $4, $5) "
                 "on conflict (id) do nothing",
-                [(l["id"], l["track"], l["module"], l.get("status", "draft"), l) for l in lessons.values()],
+                [
+                    (lesson["id"], lesson["track"], lesson["module"], lesson.get("status", "draft"), lesson)
+                    for lesson in lessons.values()
+                ],
             )
             await conn.execute(
-                "insert into app_config (key, data) values ('tracks', $1) "
-                "on conflict (key) do nothing", tracks)
+                "insert into app_config (key, data) values ('tracks', $1) on conflict (key) do nothing", tracks
+            )
 
         # Index persisted content, so reseeding never rolls back staff edits or approvals.
         sources = {}
@@ -97,11 +108,16 @@ async def main(argv: list[str] | None = None) -> int:
             source = dict(row)
             extra = source.pop("extra", None) or {}
             sources[source["id"]] = {**extra, **source}
-        lessons = {row["id"]: {**row["data"], "status": row["status"]} for row in await conn.fetch("select id, data, status from lessons where status = 'published'")}
+        lessons = {
+            row["id"]: {**row["data"], "status": row["status"]}
+            for row in await conn.fetch("select id, data, status from lessons where status = 'published'")
+        }
         chunks = [c for src in sources.values() for c in source_chunks(src)]
-        chunks += [c for l in lessons.values() for c in lesson_chunks(l) if c["source_id"] in sources]
-        existing = {r["id"]: r["content"] for r in await conn.fetch(
-            "select id, content from source_chunks where embedding is not null")}
+        chunks += [c for lesson in lessons.values() for c in lesson_chunks(lesson) if c["source_id"] in sources]
+        existing = {
+            r["id"]: r["content"]
+            for r in await conn.fetch("select id, content from source_chunks where embedding is not null")
+        }
         rows = []
         for i, c in enumerate(chunks, 1):
             vec = None
@@ -126,7 +142,10 @@ async def main(argv: list[str] | None = None) -> int:
         await conn.execute("delete from source_chunks where not (id = any($1::text[]))", ids)
         print(f"upserted {len(sources)} sources, {len(lessons)} lessons, {len(chunks)} chunks")
     finally:
-        await conn.close()
+        try:
+            await embeddings.close()
+        finally:
+            await conn.close()
     return 0
 
 

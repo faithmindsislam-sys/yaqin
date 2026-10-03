@@ -95,13 +95,13 @@ export default function SignIn() {
 
   return (
     <div className="min-h-dvh p-3 sm:p-5">
-      <div className="mx-auto grid min-h-[calc(100dvh-1.5rem)] max-w-7xl overflow-hidden rounded-3xl border border-line bg-white shadow-[var(--shadow-lift)] sm:min-h-[calc(100dvh-2.5rem)] lg:grid-cols-[1.1fr_1fr]">
+      <div className="mx-auto grid min-h-[calc(100dvh-1.5rem)] max-w-7xl overflow-hidden rounded-3xl border border-line bg-white shadow-[var(--shadow-lift)] sm:min-h-[calc(100dvh-2.5rem)] lg:grid-cols-[0.8fr_1fr]">
         {/* Story side */}
         <div className="relative hidden overflow-hidden bg-brand-800 lg:block">
-          {/* Photo: Izuddin Helmi Adnan on Unsplash (free licence) — unsplash.com/photos/JFirQekVo3U */}
+          {/* Photo: found on Pinterest, author and licence unknown — swap for a licensed photo before a public launch. */}
           <div
-            className="absolute inset-0 bg-cover bg-[center_58%]"
-            style={{ backgroundImage: "url(https://images.unsplash.com/photo-1513072064285-240f87fa81e8?q=80&w=1400&auto=format&fit=crop)" }}
+            className="absolute inset-0 bg-cover bg-[center_55%]"
+            style={{ backgroundImage: "url(https://i.pinimg.com/originals/d7/72/a9/d772a95338add476b931fb50958e8914.jpg)" }}
           />
           <div className="absolute inset-0 bg-[#0b1b33]/25" />
         </div>

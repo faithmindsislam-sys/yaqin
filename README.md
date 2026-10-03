@@ -64,8 +64,12 @@ Browser ─► CloudFront ─┬─► S3              Next.js static export
 
 ```bash
 # API (runs offline with an in-memory store over content/ when no DB or AWS is configured)
-cd api && python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
-.venv/bin/uvicorn app.main:app --port 8000
+cd api
+python3 -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+touch .env
+chmod 600 .env
+.venv/bin/python run.py --reload
 
 # Web
 cd web && npm install
@@ -73,7 +77,9 @@ echo "NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000" > .env.local
 npm run dev -- --port 3100
 ```
 
-Tests: `cd api && .venv/bin/pytest` · content check: `python3 content/validate.py`.
+Backend structure and PyCharm setup: [`api/README.md`](api/README.md).
+
+Tests: `cd api && .venv/bin/python -m pytest -q` · content check: `python3 content/validate.py`.
 
 ## Sources and licences
 

@@ -5,7 +5,7 @@
 #   AWS_PROFILE=<profile> infra/deploy-api.sh            # full provision + deploy
 #   AWS_PROFILE=<profile> infra/deploy-api.sh build      # rebuild image and roll the service
 #
-# Secrets are read from ~/.config/yaqin/supabase.env (never stored in the repo).
+# Secrets are read from the backend's private api/.env (never committed).
 set -euo pipefail
 
 REGION=${REGION:-eu-west-1}
@@ -13,7 +13,7 @@ ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 APP=yaqin
 TAGS="Key=project,Value=$APP"
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-SECRETS_FILE="$HOME/.config/yaqin/supabase.env"
+SECRETS_FILE="$ROOT/api/.env"
 DIST_ID=${DIST_ID:-E2Z664SCKULGHC}
 ORIGIN_DOMAIN=${ORIGIN_DOMAIN:-d1x2w48x0bzbrs.cloudfront.net}
 
@@ -99,7 +99,7 @@ build_image() {
   log "Build image in CodeBuild"
   local zip=/tmp/$APP-source.zip
   rm -f "$zip"
-  (cd "$ROOT" && zip -qr "$zip" api content .dockerignore -x 'api/.venv/*' 'api/**/__pycache__/*' 'api/.pytest_cache/*' 'api/.env')
+  (cd "$ROOT" && zip -qr "$zip" api content .dockerignore -x 'api/.venv/*' 'api/**/__pycache__/*' 'api/.pytest_cache/*' 'api/.ruff_cache/*' 'api/*.egg-info/*' 'api/.idea/*' 'api/.env' 'api/.env.*')
   aws_ s3 cp "$zip" "s3://$BUILD_BUCKET/source.zip" --only-show-errors
   local id status
   id=$(aws_ codebuild start-build --project-name "$APP-api" --query build.id --output text)
@@ -186,8 +186,18 @@ ensure_alb() {
   # A shared header proves a request came through our CloudFront distribution.
   ORIGIN_SECRET=$(grep '^ORIGIN_VERIFY=' "$SECRETS_FILE" | cut -d= -f2- || true)
   if [ -z "$ORIGIN_SECRET" ]; then
-    ORIGIN_SECRET=$(python3 -c 'import secrets;print(secrets.token_urlsafe(32))')
-    printf 'ORIGIN_VERIFY=%s\n' "$ORIGIN_SECRET" >> "$SECRETS_FILE"
+    ORIGIN_SECRET=$(python3 - "$SECRETS_FILE" <<'PY'
+import secrets
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+secret = secrets.token_urlsafe(32)
+lines = [line for line in path.read_text().splitlines() if not line.startswith("ORIGIN_VERIFY=")]
+path.write_text("\n".join(lines) + f"\nORIGIN_VERIFY={secret}\n")
+print(secret)
+PY
+)
   fi
   LISTENER=$(aws_ elbv2 describe-listeners --load-balancer-arn "$ALB_ARN" --query 'Listeners[0].ListenerArn' --output text 2>/dev/null || echo None)
   if [ "$LISTENER" = None ]; then

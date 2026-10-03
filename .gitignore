@@ -1,4 +1,4 @@
-# secrets (live in ~/.config/yaqin, never in the repo)
+# private configuration (backend: api/.env)
 .env
 .env.*
 !.env.example
@@ -8,6 +8,11 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.idea/
 
 # node / next
 node_modules/

@@ -1,17 +1,15 @@
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 ENV=prod
-WORKDIR /srv
+WORKDIR /srv/api
 
-COPY api/requirements.txt ./requirements.txt
-RUN pip install -r requirements.txt && useradd --create-home --uid 10001 app
-
-COPY api/app ./api/app
-COPY api/scripts ./api/scripts
-COPY content ./content
+COPY api/pyproject.toml api/README.md ./
+COPY api/app ./app
+COPY api/scripts ./scripts
+RUN pip install . && useradd --create-home --uid 10001 app
+COPY content /srv/content
 
 ENV CONTENT_DIR=/srv/content
-WORKDIR /srv/api
 USER app
 EXPOSE 8000
 
