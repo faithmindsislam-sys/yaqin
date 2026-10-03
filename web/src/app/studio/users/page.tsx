@@ -5,7 +5,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { apiEnabled, changeUserRole, searchUsers, type AdminUser } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import type { Role } from "@/lib/roles";
+import { isStaff, type Role } from "@/lib/roles";
 import { useSession } from "@/lib/session";
 import { S } from "@/lib/strings";
 
@@ -42,6 +42,7 @@ function Users() {
     finally { setBusy(false); }
   }
 
+  if (!isStaff(role) || !user) return <p className="card p-6">{t(S.instructor.restricted)}</p>;
   if (role !== "super_admin" || !user) return <p className="card p-6">{t(S.users.restricted)}</p>;
   if (!apiEnabled) return <p className="card p-6">{t(S.users.unavailable)}</p>;
 

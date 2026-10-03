@@ -99,3 +99,73 @@ for (const savedData of [null, { tracks: null, lessons: {}, sources: {} }]) {
   assert.equal(rescued.states[1], false);
 }
 console.log("Auth: roles, approval permissions, CDN-only requests, auth pages during outages, snapshot validation and retained live lessons passed.");
+
+// Render the real Studio routes and both shared-shell navs for each account role.
+const strings = load("../src/lib/strings.ts").S;
+const hooks = { useEffect: () => {}, useCallback: (fn) => fn,
+  useState: (initial) => [initial, () => {}] };
+const content = { getTrack: () => undefined, allLessons: () => [], sources: {}, refresh: async () => {} };
+function elements(node) {
+  if (!node || typeof node !== "object") return [];
+  if (Array.isArray(node)) return node.flatMap(elements);
+  if (typeof node.type === "function") return elements(node.type(node.props));
+  return [node, ...elements(node.props?.children)];
+}
+for (const lang of ["en", "ar"]) {
+  const t = (value) => value[lang];
+  for (const role of ["learner", "teacher", "admin", "super_admin", "guest"]) {
+    const session = { ready: true, user: role === "guest" ? null : { id: "test" }, guest: role === "guest",
+      role: role === "guest" ? "learner" : role, prefs: {}, signOut: async () => {} };
+    const imports = {
+      "react/jsx-runtime": jsx, react: hooks, "lucide-react": new Proxy({}, { get: () => () => null }),
+      "next/link": { default: "a" },
+      "@/lib/i18n": { useI18n: () => ({ t, lang }) },
+      "@/lib/session": { useSession: () => session, displayName: () => "Test" },
+      "@/lib/content": { useContent: () => content }, "@/lib/strings": { S: strings }, "@/lib/roles": roles,
+      "./Logo": { Logo: () => null }, "./ui": { LangToggle: () => null, TRACK_META: {} },
+      "@/components/ui": { SourceQuote: () => jsx.jsx("blockquote", { children: "Preview" }) },
+      "@/components/AppShell": { AppShell: ({ children }) => children }, "@/lib/api": { apiEnabled: true },
+    };
+    for (const pathname of ["/studio/", "/studio/sources/", "/studio/users/", "/app/learn/"]) {
+      const { AppShell } = load("../src/components/AppShell.tsx", { ...imports,
+        "next/navigation": { usePathname: () => pathname, useRouter: () => ({ replace: () => {} }) } });
+      const navs = elements(AppShell({ children: null })).filter((node) => node.type === "nav");
+      const expected = pathname.startsWith("/studio")
+        ? ["/studio/", "/studio/sources/", ...(role === "super_admin" ? ["/studio/users/"] : []), "/app/learn/"]
+        : ["/app/", "/app/learn/", "/library/", "/quran/", "/compare/", "/ask/", ...(roles.isStaff(session.role) ? ["/studio/"] : [])];
+      for (const nav of navs) {
+        const links = elements(nav).filter((node) => node.type === "a");
+        assert.deepEqual(Array.from(links, (node) => node.props.href), expected);
+        assert.deepEqual(Array.from(links.filter((node) => node.props["aria-current"] === "page"), (node) => node.props.href),
+          expected.includes(pathname) ? [pathname] : []);
+      }
+      if (!pathname.startsWith("/studio")) continue;
+      const route = pathname === "/studio/" ? "page" : pathname.split("/")[2] + "/page";
+      let stateIndex = 0;
+      const sourcePreview = pathname === "/studio/sources/";
+      const Page = load(`../src/app/studio/${route}.tsx`, { ...imports, react: { ...hooks,
+        useState: (initial) => {
+          const i = stateIndex++;
+          return [sourcePreview && i === 0 ? [{ id: "source", ref_en: "Test", ref_ar: "اختبار" }]
+            : sourcePreview && i === 1 ? "source" : initial, () => {}];
+        },
+      } }).default;
+      const nodes = elements(Page());
+      const restricted = !roles.isStaff(session.role) || !session.user;
+      if (restricted) assert(nodes.some((node) => node.props?.children === t(strings.instructor.restricted)));
+      else if (pathname === "/studio/users/" && role !== "super_admin")
+        assert(nodes.some((node) => node.props?.children === t(strings.users.restricted)));
+      else if (pathname === "/studio/") {
+        assert.equal(nodes.filter((node) => node.type === "textarea").length, 1);
+        assert(nodes.some((node) => node.type === "button" && node.props.children === t(strings.instructor.saveDraft)));
+        assert(!nodes.some((node) => node.props?.children === t(strings.instructor.queue)));
+      } else if (pathname === "/studio/sources/") {
+        assert.equal(nodes.filter((node) => node.type === "textarea").length, 0);
+        assert(nodes.some((node) => node.type === "blockquote"));
+        assert.equal(nodes.some((node) => node.type === "button" && node.props.children === t(strings.instructor.approveSource)), roles.canReview(session.role));
+      }
+    }
+  }
+}
+assert.match(readFileSync(new URL("../src/app/instructor/page.tsx", import.meta.url), "utf8"), /export \{ default \} from "\.\.\/studio\/page"/);
+console.log("Studio: bilingual desktop/mobile navigation, active links, learner nav, role access, split editor and instructor alias passed.");

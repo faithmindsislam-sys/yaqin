@@ -38,7 +38,7 @@ export default function ExploreOnboarding() {
   const selectedPurposes = p.purposes.filter((purpose) => purpose !== "question");
   const suggestions = suggestTopics(selectedPurposes);
   const draft = topicDraft ?? suggestions;
-  const purposes = PURPOSES.filter((choice) => selectedPurposes.includes(choice.id));
+  const purposes = PURPOSES.filter((choice) => selectedPurposes.some((id) => id === choice.id));
 
   useEffect(() => {
     window.scrollTo(0, 0);

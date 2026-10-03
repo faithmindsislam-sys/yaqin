@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { BookOpenText, ClipboardCheck, Compass, Home, LibraryBig, LogOut, MessagesSquare, Scale } from "lucide-react";
+import { ArrowLeft, Users, BookOpenText, ClipboardCheck, Compass, Home, LibraryBig, LogOut, MessagesSquare, Scale } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { displayName, useSession } from "@/lib/session";
 import { S } from "@/lib/strings";
@@ -22,6 +22,13 @@ const NAV = [
   { href: "/studio/", icon: ClipboardCheck, label: S.nav.instructor, staff: true },
 ];
 
+const STUDIO_NAV = [
+  { href: "/studio/", icon: ClipboardCheck, label: S.instructor.lessons, superAdmin: false },
+  { href: "/studio/sources/", icon: LibraryBig, label: S.instructor.sources, superAdmin: false },
+  { href: "/studio/users/", icon: Users, label: S.users.title, superAdmin: true },
+  { href: "/app/learn/", icon: ArrowLeft, label: S.instructor.backToApp, short: S.instructor.backToApp, superAdmin: false },
+];
+
 /** Signed-in (or guest) application frame: sidebar on desktop, bottom bar on mobile. */
 export function AppShell({ children, requireSession = true }: { children: React.ReactNode; requireSession?: boolean }) {
   const { t } = useI18n();
@@ -37,7 +44,11 @@ export function AppShell({ children, requireSession = true }: { children: React.
   }, [ready, requireSession, user, guest, router]);
 
 
-  const items = NAV.filter((n) => !n.staff || isStaff(role));
+  const studio = pathname.startsWith("/studio");
+  const items = studio ? STUDIO_NAV.filter((n) => !n.superAdmin || role === "super_admin") : NAV.filter((n) => !n.staff || isStaff(role));
+  const isActive = (href: string) => href === "/app/" ? pathname === href
+    : href === "/studio/" ? pathname === "/studio/" || pathname === "/studio"
+    : pathname.startsWith(href.replace(/\/$/, ""));
   const name = displayName(user);
 
   return (
@@ -54,7 +65,7 @@ export function AppShell({ children, requireSession = true }: { children: React.
         </div>
         <nav className="mt-8 flex flex-col gap-1">
           {items.map(({ href, icon: Icon, label }) => {
-            const active = href === "/app/" ? pathname === "/app/" : pathname?.startsWith(href.replace(/\/$/, ""));
+            const active = isActive(href);
             return (
               <Link
                 key={href}
@@ -99,9 +110,9 @@ export function AppShell({ children, requireSession = true }: { children: React.
         </main>
       </div>
 
-      <nav aria-label={t({ en: "Learning navigation", ar: "التنقل في التعلّم" })} className="fixed inset-x-0 bottom-0 z-40 grid border-t border-line bg-white/95 backdrop-blur lg:hidden" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)`, paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <nav aria-label={t(studio ? S.instructor.navigation : { en: "Learning navigation", ar: "التنقل في التعلّم" })} className="fixed inset-x-0 bottom-0 z-40 grid border-t border-line bg-white/95 backdrop-blur lg:hidden" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)`, paddingBottom: "env(safe-area-inset-bottom)" }}>
         {items.map(({ href, icon: Icon, label, short }) => (
-          <Link key={href} href={href} aria-current={(href === "/app/" ? pathname === "/app/" : pathname?.startsWith(href.replace(/\/$/, ""))) ? "page" : undefined} className={`flex flex-col items-center gap-1 px-0.5 py-2.5 text-center text-[0.7rem] leading-tight ${(href === "/app/" ? pathname === "/app/" : pathname?.startsWith(href.replace(/\/$/, ""))) ? "text-brand-700" : "text-muted"}`}>
+          <Link key={href} href={href} aria-current={isActive(href) ? "page" : undefined} className={`flex flex-col items-center gap-1 px-0.5 py-2.5 text-center text-[0.7rem] leading-tight ${isActive(href) ? "text-brand-700" : "text-muted"}`}>
             <Icon className="h-5 w-5" />
             {t(short ?? label)}
           </Link>

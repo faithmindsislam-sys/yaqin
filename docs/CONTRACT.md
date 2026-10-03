@@ -91,6 +91,22 @@ auth redirects remain deferred.
 
 ### Source (`content/sources/*.json`, table `sources`)
 
+The provider registry is `content/kb/source_registry.json` (outside the source
+record directory because that directory contains arrays of citable records).
+HadeethEnc is primary and canonical for hadith text, its published English
+translations and associated explanations. HadeethEnc source records and the
+corpus manifest carry `provider: "hadeethenc"`, `canonical_for: "hadith"`,
+`source_of_truth: true`, `priority: "primary"`. These optional fields persist in
+the existing `sources.extra` JSONB column without a database migration.
+
+Dorar, other collection editions and hadith quotations inside books are secondary
+attributed references. They cannot silently replace canonical wording. Preserve
+collection numbering and provider-attributed grades; never infer or upgrade a
+grade. Quran resources and their provenance are independent of this hadith policy.
+Canonical designation does not grant scholarly approval (`review_status` stays
+pending until review). The complete corpus lives in `resources/hadeethenc/`; the
+app's `hadith.json` remains its curated projection, linked by provider ID.
+
 ```jsonc
 {
   "id": "quran:5:6",              // quran:<surah>:<ayah> | hadith:(bukhari|muslim):<number> | hadith:henc:<id>
