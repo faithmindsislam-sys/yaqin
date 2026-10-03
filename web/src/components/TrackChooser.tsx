@@ -7,6 +7,7 @@ import { Logo } from "./Logo";
 import { LangToggle, TRACK_META } from "./ui";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+import { useOnboarding } from "@/lib/onboarding-state";
 import type { Bi, TrackId } from "@/lib/types";
 
 const TRACKS: { id: TrackId; title: Bi; audience: Bi; description: Bi; topics: Bi[] }[] = [
@@ -15,7 +16,13 @@ const TRACKS: { id: TrackId; title: Bi; audience: Bi; description: Bi; topics: B
     title: { en: "Discover Islam", ar: "اكتشف الإسلام" },
     audience: { en: "For non-Muslims and curious minds", ar: "لغير المسلمين وكل من يريد التعرّف على الإسلام" },
     description: { en: "Get to know Islam, explore its beliefs, and find thoughtful answers to your questions. Learn through respectful dialogue, religious comparisons, and discussions of common objections.", ar: "تعرّف على الإسلام وعقيدته، واعثر على أجوبة موثّقة لأسئلتك من خلال الحوار والمناظرات باحترام، ومقارنة الأديان ومناقشة الشبهات." },
-    topics: [{ en: "Islamic beliefs", ar: "العقيدة الإسلامية" }, { en: "Questions & dialogue", ar: "الأسئلة والحوار" }, { en: "Comparing religions", ar: "مقارنة الأديان" }],
+    topics: [
+      { en: "Qur’an: 8 translations", ar: "القرآن: ٨ ترجمات" },
+      { en: "Islam courses", ar: "دورات عن الإسلام" },
+      { en: "Religions & monotheism", ar: "الأديان والتوحيد" },
+      { en: "AI Islam guide", ar: "مرشد إسلامي ذكي" },
+      { en: "Global resources", ar: "مصادر عالمية" },
+    ],
   },
   {
     id: "first-steps",
@@ -37,6 +44,7 @@ export function TrackChooser({ requireSession = false }: { requireSession?: bool
   const { t } = useI18n();
   const { ready, user, guest, startGuest, setPrefs } = useSession();
   const router = useRouter();
+  const { setScreen } = useOnboarding();
 
   useEffect(() => {
     if (ready && requireSession && !user && !guest) router.replace("/signin/");
@@ -44,6 +52,7 @@ export function TrackChooser({ requireSession = false }: { requireSession?: bool
 
   function choose(track: TrackId) {
     if (track === "explore") {
+      setScreen(0);
       router.push("/start/explore/");
       return;
     }

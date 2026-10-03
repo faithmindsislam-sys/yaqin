@@ -1,9 +1,11 @@
 export const PURPOSES = [
-  { id: "basics", label: { en: "Learn the basics of Islam", ar: "أودّ التعرّف على أساسيات الإسلام" } },
-  { id: "question", label: { en: "Explore a question I have", ar: "لديّ سؤال أودّ فهمه" } },
-  { id: "family", label: { en: "Understand Muslim friends or family", ar: "أودّ فهم أصدقائي أو أفراد عائلتي المسلمين" } },
-  { id: "exploring", label: { en: "Explore Islam for myself", ar: "أودّ استكشاف الإسلام لنفسي" } },
-  { id: "curious", label: { en: "Just curious", ar: "أودّ التصفّح بدافع الفضول" } },
+  { id: "god", label: { en: "Explore God and the meaning of life", ar: "أستكشف الإيمان بالله ومعنى الحياة" }, description: { en: "How Islam understands God, purpose, and worship.", ar: "كيف يفهم الإسلام الإيمان بالله وغاية الحياة والعبادة." } },
+  { id: "prophets", label: { en: "Learn about the prophets and Muhammad", ar: "أتعرّف على الأنبياء ومحمد" }, description: { en: "Their shared message and Muhammad’s life and role in Islam.", ar: "رسالتهم المشتركة وحياة محمد ومكانته في الإسلام." } },
+  { id: "quran", label: { en: "Understand the Qur’an", ar: "أتعرّف على القرآن" }, description: { en: "Its message, its place in Muslim life, and how it was passed down.", ar: "رسالته ومكانته في حياة المسلمين وكيف نُقل عبر الأجيال." } },
+  { id: "life", label: { en: "Understand Muslim practices and everyday life", ar: "أفهم عبادات المسلمين وحياتهم اليومية" }, description: { en: "Worship, prayer, fasting, charity, ethics, family, and people’s rights.", ar: "العبادة والصلاة والصيام والصدقة والأخلاق والأسرة وحقوق الناس." } },
+  { id: "evidence", label: { en: "Explore deeper questions and evidence", ar: "أستكشف الأسئلة الكبرى والأدلة" }, description: { en: "Questions about God’s existence, suffering, science, revelation, and freedom of choice.", ar: "أسئلة عن وجود الله والألم والعلم والوحي وحرية الاختيار." } },
+  { id: "religions", label: { en: "Understand Islam’s relationship with other religions", ar: "أفهم علاقة الإسلام بالأديان الأخرى" }, description: { en: "How Islam views other faiths and people of different beliefs.", ar: "نظرة الإسلام إلى الأديان الأخرى وأصحاب المعتقدات المختلفة." } },
+  { id: "question", label: { en: "Explore a question I have", ar: "أستكشف سؤالًا لديّ" }, description: { en: "Share a question, if you wish. We’ll suggest the most relevant lesson and supporting background.", ar: "شارك سؤالك إن رغبت. سنقترح الدرس الأقرب إليه والخلفية التي تساعد على فهمه." } },
 ] as const;
 
 /** Arabic-first editorial demo copy. The declaration is not presented as a scripture quotation. */

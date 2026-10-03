@@ -10,6 +10,7 @@ import { ESSENTIALS, INTRODUCTION, PURPOSES, TOPICS, changePurposes, type Onboar
 import { useSession } from "@/lib/session";
 import { suggestTopics } from "@/lib/onboarding-journey";
 import { useOnboarding } from "@/lib/onboarding-state";
+import { useContent } from "@/lib/content";
 
 // Card colors and icons for the four intro explainers; the wording lives in ESSENTIALS.
 const ESSENTIAL_STYLE = {
@@ -18,15 +19,26 @@ const ESSENTIAL_STYLE = {
   iman: { icon: Sprout, bg: "bg-[#fdf6e3]", ink: "text-[#8a6410]" },
   akhlaq: { icon: HeartHandshake, bg: "bg-sky-100", ink: "text-[var(--n-navy)]" },
 };
+
+// Keep the original declaration intact, including punctuation and Arabic spelling.
+const declaration = INTRODUCTION.shahada.declaration;
+const arabicBreak = declaration.ar.indexOf(" وأشهد");
+const englishBreak = declaration.en.indexOf(" and I bear witness");
+const testimonies = [
+  { ar: declaration.ar.slice(0, arabicBreak), en: declaration.en.slice(0, englishBreak) },
+  { ar: declaration.ar.slice(arabicBreak), en: declaration.en.slice(englishBreak) },
+];
 export default function ExploreOnboarding() {
   const { t, lang } = useI18n();
   const { preferences: p, setPreferences, topicDraft, setTopicDraft, screen, setScreen } = useOnboarding();
   const { user, guest, startGuest, setPrefs: setSessionPrefs } = useSession();
   const router = useRouter();
+  const { trackLessons } = useContent();
   const heading = useRef<HTMLHeadingElement>(null);
-  const suggestions = suggestTopics(p.purposes);
+  const selectedPurposes = p.purposes.filter((purpose) => purpose !== "question");
+  const suggestions = suggestTopics(selectedPurposes);
   const draft = topicDraft ?? suggestions;
-  const purposes = PURPOSES.filter((choice) => p.purposes.includes(choice.id));
+  const purposes = PURPOSES.filter((choice) => selectedPurposes.includes(choice.id));
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -39,7 +51,8 @@ export default function ExploreOnboarding() {
   }
 
   function showTopics() {
-    setTopicDraft((previous) => previous ?? suggestTopics(p.purposes));
+    if (!selectedPurposes.length) return;
+    setTopicDraft((previous) => previous ?? suggestTopics(selectedPurposes));
     setScreen(2);
   }
 
@@ -49,6 +62,13 @@ export default function ExploreOnboarding() {
     if (!user && !guest) startGuest();
     setSessionPrefs({ track: "explore", onboarded: true });
     router.push("/app/learn/");
+  }
+
+  function exploreBasics() {
+    if (!user && !guest) startGuest();
+    setSessionPrefs({ track: "explore", onboarded: true });
+    const firstLesson = trackLessons("explore")[0];
+    router.push(firstLesson ? `/lesson/?id=${encodeURIComponent(firstLesson.id)}` : "/app/learn/");
   }
 
   function topicChoice(topic: (typeof TOPICS)[number]) {
@@ -63,20 +83,21 @@ export default function ExploreOnboarding() {
   }
 
   return (
-    <div className="onboarding min-h-dvh bg-sky-50">
+    <div className={`onboarding min-h-dvh bg-sky-50 ${screen === 0 ? "onboarding-intro" : screen === 1 ? "onboarding-personalization" : ""}`}>
       <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-8 sm:py-5">
         <Logo />
         <LangToggle />
       </header>
-      <main className={`mx-auto px-5 py-8 sm:px-8 ${screen === 0 ? "max-w-5xl" : "max-w-2xl sm:py-12"}`}>
+      <main className={`mx-auto px-5 py-8 sm:px-8 ${screen <= 1 ? "max-w-5xl" : "max-w-2xl sm:py-12"}`}>
         {screen === 0 ? (
           <section className="nutshell">
-            <div className="text-center">
+            <div className="nutshell-heading text-center">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--n-accent-soft)] px-3 py-1.5 text-xs font-medium text-[var(--n-accent)]"><BookOpen className="h-3.5 w-3.5" aria-hidden="true" />{t({ en: "Islam 101", ar: "أساسيات الإسلام" })}</span>
               <h1 ref={heading} tabIndex={-1} className="mt-5 font-serif text-4xl leading-tight sm:text-5xl">{t({ en: "Islam, in a nutshell", ar: "الإسلام باختصار" })}</h1>
+              <p className="nutshell-summary">{t({ en: "Discover what Muslims believe, how they practise, and how faith shapes everyday life. Open any topic to learn more, at your own pace.", ar: "تعرّف على ما يؤمن به المسلمون، وكيف يمارسون شعائرهم، وأثر الإيمان في حياتهم اليومية. افتح أي موضوع لمعرفة المزيد بالوتيرة التي تناسبك." })}</p>
             </div>
 
-            <nav aria-label={t({ en: "In this introduction", ar: "في هذه المقدّمة" })} className="mx-auto mt-10 grid max-w-4xl grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
+            <nav aria-label={t({ en: "In this introduction", ar: "في هذه المقدّمة" })} className="nutshell-topics mx-auto mt-10 grid max-w-4xl grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
               {ESSENTIALS.map(({ id, title, label }) => {
                 const { icon: Icon, bg, ink } = ESSENTIAL_STYLE[id];
                 return <button key={id} type="button" aria-haspopup="dialog" onClick={() => (document.getElementById(`essential-${id}`) as HTMLDialogElement).showModal()} className={`group relative cursor-pointer rounded-[20px] border border-transparent p-3 text-start transition hover:-translate-y-0.5 hover:border-[var(--n-border)] sm:p-5 ${bg}`}>
@@ -87,15 +108,6 @@ export default function ExploreOnboarding() {
                 </button>;
               })}
             </nav>
-
-            <aside aria-labelledby="shahada-title" className="mx-auto mt-4 flex max-w-4xl flex-col gap-4 rounded-[20px] border border-[var(--n-border)] bg-[var(--n-accent-soft)] p-5 sm:flex-row sm:items-center sm:gap-6 sm:px-8 sm:py-6">
-              <div className="min-w-0 flex-1">
-                <h2 id="shahada-title" className="text-xs font-medium text-[var(--n-accent)]">{t(INTRODUCTION.shahada.title)}</h2>
-                <p className="mt-1 text-sm leading-6 text-ink-soft">{t(INTRODUCTION.shahada.lead)}</p>
-                <p lang="ar" dir="rtl" className="mt-2 text-balance text-center font-quran text-xl leading-[2] sm:text-2xl">{INTRODUCTION.shahada.declaration.ar}</p>
-                {lang !== "ar" && <p className="text-xs leading-5 text-ink-soft">{INTRODUCTION.shahada.declaration.en}</p>}
-              </div>
-            </aside>
 
             {ESSENTIALS.map(({ id, title, label, intro, items }) => {
               const { icon: Icon, bg, ink } = ESSENTIAL_STYLE[id];
@@ -114,32 +126,43 @@ export default function ExploreOnboarding() {
                     <span aria-hidden="true" className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-medium ${bg} ${ink}`}>{index + 1}</span>
                     <div><p className="text-sm font-medium">{t(item.title)}</p><p className="mt-0.5 text-sm leading-6 text-ink-soft">{t(item.body)}</p></div>
                   </li>)}</ol>
+                  {id === "tawhid" && <section aria-labelledby="shahada-title" className="shahada-card">
+                    <h3 id="shahada-title" className="shahada-title">{t(INTRODUCTION.shahada.title)}</h3>
+                    <p className="shahada-intro">{t(INTRODUCTION.shahada.meaning)}</p>
+                    <div className="shahada-testimonies">
+                      {testimonies.map((part, index) => (
+                        <div className="shahada-testimony" key={index}>
+                          <div className="shahada-ornament" aria-hidden="true"><span>✦</span></div>
+                          <p className="shahada-label">{t(index === 0 ? { en: "First", ar: "الأولى" } : { en: "Second", ar: "الثانية" })}</p>
+                          <p lang="ar" dir="rtl" className="shahada-arabic">{part.ar}</p>
+                          {lang !== "ar" && <p lang="en" dir="ltr" className="shahada-translation">{part.en}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </section>}
                 </div>
               </dialog>;
             })}
 
-            <div className="mt-10 flex flex-col items-center gap-1 sm:flex-row sm:justify-center sm:gap-5">
-              <button className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--n-accent)] px-6 text-sm font-medium text-white transition-colors hover:bg-brand-800 focus-visible:outline-[var(--n-accent)]" onClick={() => setScreen(1)}>{t({ en: "Find my starting point", ar: "اختر بداية تناسبك" })}<ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" /></button>
+            <div className="nutshell-actions mt-10 flex flex-col items-center gap-1 sm:flex-row sm:justify-center sm:gap-5">
+              <button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-white px-6 text-sm font-medium text-[var(--n-accent)] transition-colors hover:bg-[var(--n-accent-soft)] focus-visible:outline-[var(--n-accent)]" onClick={exploreBasics}>{t({ en: "Basic journey", ar: "رحلة الأساسيات" })}</button>
+              <button type="button" className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full bg-[var(--n-accent)] px-5 text-sm font-medium text-white transition-colors hover:bg-brand-800 focus-visible:outline-[var(--n-accent)]" onClick={() => setScreen(1)}>{t({ en: "Personalized journey", ar: "رحلة مخصصة لك" })}<span className="rounded-full bg-white/15 px-2 py-1 text-[10px] leading-tight">{t({ en: "Recommended", ar: "موصى بها" })}</span></button>
             </div>
+            <button type="button" className="nutshell-back inline-flex min-h-11 items-center justify-center gap-2 self-center rounded-full px-3 text-sm text-ink-soft hover:text-brand-700" onClick={() => router.push("/start/")}><ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />{t({ en: "Back", ar: "رجوع" })}</button>
           </section>
         ) : screen === 1 ? (
-          <section className="card p-5 sm:p-8">
+          <section className="personalization-card card p-5 sm:p-8">
             <p className="eyebrow">{t({ en: "Your interests · 1 of 2", ar: "ما يهمّك · 1 من 2" })}</p>
-            <h1 ref={heading} tabIndex={-1} className="mt-3 font-serif text-3xl sm:text-4xl">{t({ en: "What brings you here?", ar: "ما الذي يهمّك اليوم؟" })}</h1>
-            <p id="purpose-description" className="mt-3 text-sm leading-7 text-ink-soft">{t({ en: "Choose any that feel right today. We’ll suggest a few topics, and you decide what to keep.", ar: "اختر كل ما يناسبك اليوم. سنقترح مواضيع للبداية، ولك أن تعدّلها أو تتخطّاها." })}</p>
+            <h1 ref={heading} tabIndex={-1} className="mt-3 font-serif text-3xl sm:text-4xl">{t({ en: "What would you like to understand?", ar: "ما الذي تودّ فهمه؟" })}</h1>
+            <p id="purpose-description" className="mt-3 text-sm leading-7 text-ink-soft">{t({ en: "Choose any topics that interest you. We’ll suggest where to begin, and you can change your journey anytime.", ar: "اختر المواضيع التي تهمّك. سنقترح لك نقطة بداية، ويمكنك تغيير رحلتك في أي وقت." })}</p>
             <fieldset className="mt-6" aria-describedby="purpose-description">
-              <legend className="sr-only">{t({ en: "What brings you here? Select all that apply.", ar: "ما الذي يهمّك اليوم؟ يمكنك اختيار أكثر من إجابة." })}</legend>
-              <div className="space-y-2.5">{PURPOSES.map((choice) => <label key={choice.id} className="onboarding-choice"><input type="checkbox" name="purposes" value={choice.id} checked={p.purposes.includes(choice.id)} onChange={() => choosePurposes(p.purposes.includes(choice.id) ? p.purposes.filter((id) => id !== choice.id) : [...p.purposes, choice.id])} /><span>{t(choice.label)}</span></label>)}</div>
+              <legend className="sr-only">{t({ en: "What would you like to understand? Select all that apply.", ar: "ما الذي تودّ فهمه؟ يمكنك اختيار أكثر من موضوع." })}</legend>
+              <div className="personalization-options">{PURPOSES.filter((choice) => choice.id !== "question").map((choice) => <label key={choice.id} className="onboarding-choice"><input type="checkbox" name="purposes" value={choice.id} checked={selectedPurposes.includes(choice.id)} onChange={() => choosePurposes(selectedPurposes.includes(choice.id) ? selectedPurposes.filter((id) => id !== choice.id) : [...selectedPurposes, choice.id])} /><span><span className="block font-medium">{t(choice.label)}</span><span className="mt-1 block text-xs leading-5 text-ink-soft">{t(choice.description)}</span></span></label>)}</div>
               {p.purposes.length > 0 && <button className="mt-2 min-h-11 text-xs text-ink-soft underline underline-offset-4" onClick={() => choosePurposes([])}>{t({ en: "Clear choices", ar: "ألغِ الاختيارات" })}</button>}
             </fieldset>
-            {p.purposes.includes("question") && <div className="mt-4">
-              <label htmlFor="question-text" className="mb-2 block text-sm">{t({ en: "What would you like to understand? (optional)", ar: "ما الذي تودّ فهمه؟ (اختياري)" })}</label>
-              <textarea id="question-text" className="input min-h-24 resize-y" maxLength={300} value={p.questionText ?? ""} onChange={(event) => setPreferences((previous) => ({ ...previous, questionText: event.target.value.slice(0, 300) || null }))} placeholder={t({ en: "For example: Why do Muslims pray?", ar: "مثلًا: لماذا يصلّي المسلمون؟" })} aria-describedby="question-limit" />
-              <p id="question-limit" className="mt-1 text-end text-xs text-ink-soft">{p.questionText?.length ?? 0}/300</p>
-            </div>}
             <nav aria-label={t({ en: "Question navigation", ar: "التنقّل في السؤال" })} className="mt-6 border-t border-line pt-5">
-              <div className="flex items-center justify-between gap-3"><button className="btn btn-ghost !px-4 text-sm" onClick={() => setScreen(0)}><ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />{t({ en: "Back", ar: "رجوع" })}</button><button className="btn btn-primary text-sm" onClick={showTopics}>{t({ en: "Suggest topics", ar: "اقترح مواضيع" })}<ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" /></button></div>
-              <button className="mx-auto mt-2 block min-h-11 text-sm text-ink-soft underline underline-offset-4" onClick={() => { choosePurposes([]); setScreen(2); }}>{t({ en: "Skip this question", ar: "تخطَّ هذا السؤال" })}</button>
+              <div className="flex items-center justify-between gap-3"><button className="btn btn-ghost !px-4 text-sm" onClick={() => setScreen(0)}><ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />{t({ en: "Back", ar: "رجوع" })}</button><button className="btn btn-primary text-sm disabled:!bg-slate-200 disabled:!text-slate-500 disabled:cursor-not-allowed" disabled={!selectedPurposes.length} onClick={showTopics}>{t({ en: "Show my suggested journey", ar: "اعرض رحلتي المقترحة" })}</button></div>
+              <button className="mx-auto mt-2 block min-h-11 text-sm text-ink-soft underline underline-offset-4" onClick={exploreBasics}>{t({ en: "Prefer a general introduction? Choose Basic journey.", ar: "تفضّل مقدّمة عامة؟ اختر رحلة الأساسيات." })}</button>
             </nav>
           </section>
         ) : (

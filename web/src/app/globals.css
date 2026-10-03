@@ -260,10 +260,182 @@ textarea:focus-visible {
 .onboarding-choice:has(input:focus-visible) { outline: 2px solid var(--color-brand-700); outline-offset: 3px; }
 .onboarding-choice:has(input:disabled) { background: var(--color-sky-50); color: var(--color-ink-soft); cursor: not-allowed; }
 .onboarding-choice input { width: 17px; height: 17px; flex-shrink: 0; accent-color: var(--color-brand-700); }
+.onboarding-personalization > header { padding-block: 10px; }
+.onboarding-personalization > header .brand-logo img { height: 40px; }
+.onboarding-personalization > main { padding-block: 16px; }
+.personalization-card { padding: 24px; }
+.personalization-card h1 { margin-top: 8px; font-size: clamp(28px, 3vw, 36px); }
+.personalization-card #purpose-description { margin-top: 8px; line-height: 1.6; }
+.personalization-card fieldset { margin-top: 18px; }
+.personalization-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.personalization-options .onboarding-choice { align-items: flex-start; gap: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.4; }
+.personalization-options input { margin-top: 2px; }
+.personalization-question { grid-column: 1 / -1; }
+.personalization-card > nav { margin-top: 16px; padding-top: 12px; }
+@media (max-width: 639px) {
+  .personalization-card { padding: 20px 16px; }
+  .personalization-options { grid-template-columns: minmax(0, 1fr); }
+  .personalization-card > nav > div { flex-wrap: wrap; }
+  .personalization-card > nav > button { font-size: 12px; }
+}
 .onboarding summary:focus-visible { outline: 2px solid var(--color-brand-700); outline-offset: 3px; border-radius: 6px; }
 .onboarding details[open] summary svg { transform: rotate(180deg); }
 /* "Islam in a nutshell" intro: light palette on the brand blue, scoped to this screen only. */
 .nutshell { --n-navy: #102b4e; --n-accent: var(--color-brand-700); --n-accent-soft: var(--color-brand-50); --n-border: #e7ebef; color: var(--n-navy); }
+/* Keep the introduction and its next step together within a laptop viewport. */
+.onboarding-intro { display: flex; flex-direction: column; }
+.onboarding-intro > header { width: 100%; padding-block: 10px; }
+.onboarding-intro > header .brand-logo img { height: 40px; }
+.onboarding-intro > main { width: 100%; padding-block: 14px; flex: 1; display: flex; align-items: center; }
+.onboarding-intro .nutshell { width: 100%; display: flex; flex-direction: column; gap: clamp(16px, 3dvh, 28px); }
+.nutshell-summary { max-width: 38rem; margin: 12px auto 0; font-size: 15px; line-height: 1.7; color: var(--color-ink-soft); }
+.onboarding-intro .nutshell-heading h1 { margin-top: 8px; font-size: clamp(28px, 4.8dvh, 38px); }
+.onboarding-intro .nutshell-topics { width: 100%; margin-top: 0; }
+.onboarding-intro .nutshell-topics > button { padding: 12px; }
+.onboarding-intro .nutshell-topics > button > span:first-child { width: 32px; height: 32px; }
+.onboarding-intro .nutshell-topics > button > span:nth-of-type(2) { margin-top: 8px; font-size: 14px; }
+.onboarding-intro .nutshell .shahada-card { width: 100%; margin: 20px auto 0; padding: 16px 20px; }
+.onboarding-intro .nutshell-dialog .shahada-testimonies { grid-template-columns: minmax(0, 1fr); }
+.onboarding-intro .nutshell-dialog .shahada-arabic { font-size: 28px; }
+.onboarding-intro .nutshell-dialog .shahada-translation { font-size: 16px; }
+.onboarding-intro .shahada-testimonies { margin-top: 12px; gap: 20px; }
+.onboarding-intro .shahada-ornament { margin-bottom: 8px; }
+.onboarding-intro .shahada-arabic { font-size: clamp(28px, 3vw, 36px); line-height: 1.4; }
+.onboarding-intro .shahada-translation { font-size: clamp(16px, 1.7vw, 19px); line-height: 1.4; }
+.onboarding-intro .nutshell-actions { margin-top: 0; flex-direction: row; justify-content: center; gap: 12px; }
+.onboarding-intro .nutshell-back { margin-top: -10px; }
+@media (max-width: 767px) {
+  .onboarding-intro > main { padding-block: 10px; }
+  .onboarding-intro .nutshell { gap: 16px; }
+  .onboarding-intro .nutshell-summary { font-size: 14px; line-height: 1.6; }
+  .onboarding-intro .nutshell-actions { flex-direction: column; gap: 10px; }
+  .onboarding-intro .nutshell-heading h1 { font-size: 28px; }
+  .onboarding-intro .nutshell-topics > button {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-content: center;
+    column-gap: 8px;
+    padding: 10px 20px 10px 10px;
+    min-height: 68px;
+  }
+  .onboarding-intro .nutshell-topics > button > span:first-child { width: 24px; height: 24px; grid-row: 1 / 3; align-self: center; }
+  .onboarding-intro .nutshell-topics > button > span:nth-of-type(2) { margin-top: 0; font-size: 12px; line-height: 1.3; }
+  .onboarding-intro .nutshell-topics > button > span:nth-of-type(3) { grid-column: 2; font-size: 11px; line-height: 1.3; }
+  .onboarding-intro .nutshell-topics > button > svg { width: 12px; height: 12px; top: 8px; inset-inline-end: 8px; }
+  .onboarding-intro .nutshell .shahada-card { padding: 12px 14px; }
+  .onboarding-intro .shahada-title { font-size: 12px; }
+  .onboarding-intro .shahada-intro { font-size: 12px; line-height: 1.45; }
+  .onboarding-intro .shahada-testimonies { margin-top: 10px; gap: 14px; }
+  .onboarding-intro .shahada-ornament { margin-bottom: 6px; }
+  .onboarding-intro .shahada-arabic { font-size: 28px; line-height: 1.4; }
+  .onboarding-intro .shahada-translation { font-size: 16px; line-height: 1.35; }
+}
+@media (max-width: 767px) and (max-height: 740px) {
+  .onboarding-intro > header { padding-block: 6px; }
+  .onboarding.onboarding-intro > header .brand-logo img { height: 32px; }
+  .onboarding-intro > main { padding: 6px 16px; }
+  .onboarding-intro .nutshell { gap: 12px; }
+  .onboarding-intro .nutshell-topics > button { min-height: 64px; padding: 8px 16px 8px 8px; column-gap: 6px; }
+  .onboarding-intro .nutshell-heading h1 { font-size: 26px; margin-top: 4px; }
+  .onboarding-intro .nutshell-heading > span { padding-block: 3px; }
+  .onboarding-intro .nutshell .shahada-card { padding-block: 10px; }
+  .onboarding-intro .shahada-testimonies { gap: 10px; margin-top: 8px; }
+  .onboarding-intro .shahada-ornament { margin-bottom: 4px; }
+  .onboarding-intro .shahada-ornament span { font-size: 14px; }
+  .onboarding-intro .shahada-label { font-size: 10px; line-height: 1.3; }
+  .onboarding-intro .shahada-arabic { font-size: 24px; margin-top: 4px; }
+  .onboarding-intro .shahada-translation { font-size: 14px; }
+}
+@media (min-width: 768px) and (max-height: 650px) {
+  .onboarding-intro > main { padding-block: 10px; }
+  .onboarding-intro .nutshell { gap: 10px; }
+  .onboarding-intro .nutshell-topics > button { padding: 10px 12px; }
+  .onboarding-intro .nutshell .shahada-card { padding-block: 12px; }
+}
+/* A quiet, warm frame for the two testimonies. */
+.shahada-card {
+  box-sizing: border-box;
+  max-width: 56rem;
+  margin: 1rem auto 0;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border: 1px solid #e8dfce;
+  border-radius: 1.25rem;
+  background: radial-gradient(ellipse at 50% 0%, #f6f0e3 0%, #fffcf7 75%);
+  color: #183e35;
+  text-align: start;
+  box-shadow: 0 8px 28px -12px rgb(48 62 48 / 14%);
+}
+.shahada-title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.shahada-intro {
+  margin: 0.375rem 0 0;
+  color: #53635d;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+.shahada-testimonies {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.75rem;
+  margin-top: 1.5rem;
+}
+.shahada-testimony {
+  min-width: 0;
+  text-align: center;
+  padding-inline: 0.25rem;
+}
+.shahada-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  color: #b38a3e;
+  margin-bottom: 1rem;
+}
+.shahada-ornament::before, .shahada-ornament::after {
+  content: "";
+  height: 1px;
+  width: clamp(3rem, 10vw, 6rem);
+  background: #dfcfae;
+}
+.shahada-ornament span { font-size: 1.125rem; line-height: 1; }
+.shahada-label {
+  margin: 0;
+  color: #89672e;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+.shahada-arabic {
+  margin: 0.375rem 0 0;
+  font-family: var(--font-amiri-quran, "Amiri Quran"), "Amiri", "Scheherazade New", serif;
+  font-size: clamp(1.75rem, 3.25vw, 2.375rem);
+  font-weight: 400;
+  line-height: 1.5;
+  color: #183e35;
+  text-wrap: balance;
+}
+.shahada-translation {
+  max-width: 28rem;
+  margin: 0.25rem auto 0;
+  color: #52646a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+@media (min-width: 768px) {
+  .shahada-testimonies { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+}
 .nutshell-dialog { width: min(100% - 32px, 560px); max-height: min(100dvh - 48px, 760px); margin: auto; padding: 0; border: 1px solid var(--n-border); border-radius: 24px; background: white; color: var(--n-navy); overflow-y: auto; overscroll-behavior: contain; }
 .nutshell-dialog::backdrop { background: rgb(16 43 78 / 0.35); backdrop-filter: blur(3px); }
 .nutshell-dialog[open] { animation: nutshell-pop 180ms ease-out; }

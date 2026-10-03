@@ -41,17 +41,17 @@ for (let mask = 0; mask < 2 ** PURPOSES.length; mask++) {
   assert.ok(suggestions.every((id) => TOPICS.some((topic) => topic.id === id)));
   assert.deepEqual(plain(suggestions), plain(suggestTopics([...purposes].reverse())));
 }
-assert.deepEqual(plain(suggestTopics(["family"])), ["prayer", "ethics"]);
+assert.deepEqual(plain(suggestTopics(["life"])), ["prayer", "ethics"]);
 assert.deepEqual(plain(suggestTopics(["question"])), ["questions", "god"]);
-assert.deepEqual(plain(suggestTopics(["family", "question"])), ["questions", "prayer", "god"]);
-const confirmed = { ...empty, purposes: ["family"], interests: ["ethics", "quran"], topicsConfirmed: true };
-assert.equal(changePurposes(confirmed, ["family"]), confirmed);
-assert.deepEqual(plain(changePurposes(confirmed, ["curious"]).interests), []);
-assert.equal(changePurposes(confirmed, ["curious"]).topicsConfirmed, false);
-const withQuestion = { ...confirmed, purposes: ["question", "family"], questionText: "Example question" };
-assert.equal(changePurposes(withQuestion, ["question", "basics"]).questionText, "Example question");
-assert.equal(changePurposes(withQuestion, ["family"]).questionText, null);
-assert.deepEqual(plain(changePurposes(confirmed, ["family", "question", "family"]).purposes), ["question", "family"]);
+assert.deepEqual(plain(suggestTopics(["life", "question"])), ["prayer", "questions", "ethics"]);
+const confirmed = { ...empty, purposes: ["life"], interests: ["ethics", "quran"], topicsConfirmed: true };
+assert.equal(changePurposes(confirmed, ["life"]), confirmed);
+assert.deepEqual(plain(changePurposes(confirmed, ["prophets"]).interests), []);
+assert.equal(changePurposes(confirmed, ["prophets"]).topicsConfirmed, false);
+const withQuestion = { ...confirmed, purposes: ["question", "life"], questionText: "Example question" };
+assert.equal(changePurposes(withQuestion, ["question", "god"]).questionText, "Example question");
+assert.equal(changePurposes(withQuestion, ["life"]).questionText, null);
+assert.deepEqual(plain(changePurposes(confirmed, ["life", "question", "life"]).purposes), ["life", "question"]);
 
 let state = { preferences: { ...empty, purposes: [], interests: [] }, topicDraft: null, screen: 0 };
 const context = {
@@ -69,7 +69,7 @@ const { default: Page } = load("../src/app/start/explore/page.tsx", {
   "next/navigation": { useRouter: () => ({ push: (url) => session.pushed.push(url) }) },
   "@/lib/session": { useSession: () => ({ user: null, guest: session.guest, startGuest: () => { session.guest = true; }, setPrefs: (prefs) => { session.prefs = prefs; } }) },
   "lucide-react": {}, "@/components/Logo": {}, "@/components/ui": {},
-  "@/lib/content": { useContent: () => ({ sources: content.sources }) },
+  "@/lib/content": { useContent: () => ({ sources: content.sources, trackLessons: (id) => content.tracks.find((track) => track.id === id)?.modules.flatMap((module) => module.lessons).map((id) => content.lessons[id]).filter(Boolean) ?? [] }) },
   "@/lib/i18n": { useI18n: () => ({ lang: "en", t: (label) => label?.en ?? "" }) },
   "@/lib/onboarding": schema, "@/lib/onboarding-journey": journeyModule,
   "@/lib/onboarding-state": { useOnboarding: () => context },
@@ -85,19 +85,29 @@ const input = (name, value) => controls().find((node) => node.type === "input" &
 const button = (text) => controls().find((node) => node.type === "button" && [].concat(node.props.children).includes(text));
 assert.equal(controls().filter((node) => node.type === "dialog").length, 4);
 assert.equal(controls().filter((node) => node.type === "input").length, 0);
-button("Find my starting point").props.onClick();
+const introNodes = controls();
+const testimonyCard = introNodes.find((node) => node.props?.["aria-labelledby"] === "shahada-title");
+assert.ok(nodes(introNodes.find((node) => node.type === "dialog" && node.props.id === "essential-tawhid")).includes(testimonyCard), "Testimonies belong inside the Oneness of Allah dialog");
+for (const dialog of introNodes.filter((node) => node.type === "dialog" && node.props.id !== "essential-tawhid")) {
+  assert.ok(!nodes(dialog).includes(testimonyCard));
+}
+button("Personalized journey").props.onClick();
 assert.equal(state.screen, 1);
 assert.equal(controls().filter((node) => node.type === "input" && node.props.checked).length, 0);
-assert.equal(input("purposes", "family").props.type, "checkbox");
-input("purposes", "family").props.onChange();
-input("purposes", "question").props.onChange();
-assert.equal(input("purposes", "family").props.checked, true);
-assert.equal(input("purposes", "question").props.checked, true);
-assert.equal(controls().some((node) => node.type === "textarea"), true);
-input("purposes", "question").props.onChange();
-assert.equal(input("purposes", "family").props.checked, true);
+assert.equal(input("purposes", "question"), undefined);
+assert.equal(button("Show my suggested journey").props.disabled, true);
+button("Show my suggested journey").props.onClick();
+assert.equal(state.screen, 1);
+assert.equal(input("purposes", "life").props.type, "checkbox");
+input("purposes", "life").props.onChange();
+input("purposes", "quran").props.onChange();
+assert.equal(input("purposes", "life").props.checked, true);
+assert.equal(input("purposes", "quran").props.checked, true);
+assert.equal(button("Show my suggested journey").props.disabled, false);
+input("purposes", "quran").props.onChange();
+assert.equal(input("purposes", "life").props.checked, true);
 assert.equal(controls().some((node) => node.type === "textarea"), false);
-button("Suggest topics").props.onClick();
+button("Show my suggested journey").props.onClick();
 assert.equal(state.screen, 2);
 assert.deepEqual(plain(state.topicDraft), ["prayer", "ethics"]);
 assert.deepEqual(plain(state.preferences.interests), []);
@@ -108,7 +118,7 @@ input("interests", "god").props.onChange();
 assert.equal(input("interests", "prophet").props.disabled, true);
 const edited = plain(state.topicDraft);
 button("Back").props.onClick();
-button("Suggest topics").props.onClick();
+button("Show my suggested journey").props.onClick();
 assert.deepEqual(plain(state.topicDraft), edited);
 button("Confirm my topics").props.onClick();
 assert.equal(state.preferences.topicsConfirmed, true);
@@ -122,19 +132,27 @@ button("Confirm my topics").props.onClick();
 assert.deepEqual(plain(state.preferences.interests), []);
 button("Back").props.onClick();
 assert.equal(state.screen, 1);
-input("purposes", "question").props.onChange();
-const question = controls().find((node) => node.type === "textarea");
-assert.equal(question.props.maxLength, 300);
-question.props.onChange({ target: { value: "x".repeat(350) } });
-assert.equal(state.preferences.questionText.length, 300);
-button("Suggest topics").props.onClick();
-button("Back").props.onClick();
-assert.equal(state.preferences.questionText.length, 300);
-button("Skip this question").props.onClick();
+button("Clear choices").props.onClick();
+assert.equal(button("Show my suggested journey").props.disabled, true);
+button("Show my suggested journey").props.onClick();
+assert.equal(state.screen, 1);
+context.setPreferences({ ...empty, purposes: ["question"], interests: [] });
+assert.equal(button("Show my suggested journey").props.disabled, true, "A hidden old choice cannot enable the button");
+context.setPreferences({ ...empty, purposes: [], interests: [] }); context.setTopicDraft(null); context.setScreen(2);
 assert.equal(state.screen, 2);
 assert.deepEqual(plain(state.preferences.purposes), []);
 assert.equal(state.preferences.questionText, null);
 button("Skip for now").props.onClick();
 assert.deepEqual(plain(state.preferences), plain(empty));
 assert.equal(session.pushed.length, 3);
-console.log("Onboarding: four sourced intro cards with dialogs, all 32 purpose combinations, multiple selections, optional text, unconfirmed drafts, edits, topic limits, skips and the dashboard redirect passed.");
+state = { preferences: { ...empty, purposes: [], interests: [] }, topicDraft: null, screen: 0 };
+session.pushed = [];
+session.guest = false;
+button("Basic journey").props.onClick();
+const firstExploreLesson = content.tracks.find((track) => track.id === "explore").modules.flatMap((module) => module.lessons)[0];
+assert.deepEqual(session.pushed, [`/lesson/?id=${encodeURIComponent(firstExploreLesson)}`]);
+assert.deepEqual(plain(session.prefs), { track: "explore", onboarded: true });
+assert.equal(session.guest, true);
+assert.equal(state.screen, 0, "Exploring basics bypasses personalization");
+assert.deepEqual(plain(state.preferences), plain(empty), "Exploring basics does not record answers");
+console.log("Onboarding: testimonies inside the Oneness dialog, direct basics lesson, optional personalization, all 128 interest combinations, topic limits, skips and dashboard redirects passed.");
