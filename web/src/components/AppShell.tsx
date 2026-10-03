@@ -52,7 +52,7 @@ export function AppShell({ children, requireSession = true }: { children: React.
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[15.5rem_1fr]">
-      <aside className="sticky top-0 hidden h-screen flex-col border-e border-line bg-white/80 px-4 py-6 backdrop-blur lg:flex">
+      <aside className="sticky top-0 hidden h-screen flex-col border-e border-line bg-sky-50 px-4 py-6 lg:flex">
         <div className="px-2">
           <Logo href="/app/" />
           <p className="mt-2 text-xs text-brand-700">{t(S.motto)}</p>
@@ -71,7 +71,7 @@ export function AppShell({ children, requireSession = true }: { children: React.
                 aria-current={active ? "page" : undefined}
                 href={href}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
-                  active ? "bg-brand-50 font-semibold text-brand-700" : "text-ink-soft hover:bg-sky-50"
+                  active ? "bg-brand-100 font-semibold text-brand-700" : "text-ink-soft hover:bg-white"
                 }`}
               >
                 <Icon className="h-[1.1rem] w-[1.1rem] shrink-0" />
@@ -86,14 +86,14 @@ export function AppShell({ children, requireSession = true }: { children: React.
             <p className="truncate text-sm font-medium text-ink">{name ?? (guest ? (t({ en: "Guest", ar: "زائر" })) : "")}</p>
             <p className="text-xs text-muted capitalize">{role.replaceAll("_", " ")}</p>
           </div>
-          <button onClick={() => signOut().then(() => router.push("/"))} className="rounded-lg p-2 text-muted hover:bg-sky-50 hover:text-ink" title={t(S.nav.signOut)}>
+          <button onClick={() => signOut().then(() => router.push("/"))} className="rounded-lg p-2 text-muted hover:bg-white hover:text-ink" title={t(S.nav.signOut)}>
             <LogOut className="h-4 w-4 rtl:rotate-180" />
           </button>
         </div>
       </aside>
 
-      <div className="min-w-0 pb-20 lg:pb-0">
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-sky-50/95 px-4 py-3 backdrop-blur sm:px-6 lg:justify-end">
+      <div className="min-h-screen min-w-0 bg-white pb-20 lg:pb-0">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:justify-end">
           <div className="lg:hidden">
             <Logo compact href="/app/" />
           </div>
